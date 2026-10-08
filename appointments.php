@@ -4,6 +4,7 @@ if (!isset($_SESSION['user'])) {
     header('Location: index.php');
     exit;
 }
+
 $user = $_SESSION['user'];
 
 $appointments = [
@@ -26,10 +27,87 @@ $appointments = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Appointments - JJJ GentleCare</title>
     <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 18px;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+
+        .filter-btn:hover {
+            border-color: #0d9488;
+            color: #0d9488;
+        }
+
+        .filter-btn.active {
+            background: #0d9488;
+            border-color: #0d9488;
+            color: white;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .status-confirmed {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-checked-in {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .status-completed {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .status-cancelled {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .status-no-show {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .date-time .time {
+            font-size: 0.82rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+    </style>
 </head>
 
 <body>
     <div class="layout">
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -84,6 +162,7 @@ $appointments = [
             </div>
         </aside>
 
+        <!-- MAIN CONTENT -->
         <main class="main">
             <header class="topbar">
                 <div>
@@ -92,6 +171,7 @@ $appointments = [
                 </div>
             </header>
 
+            <!-- FILTER TABS -->
             <div class="filter-tabs">
                 <button class="filter-btn active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="confirmed">Confirmed</button>
@@ -102,6 +182,7 @@ $appointments = [
                 <button class="filter-btn" data-filter="no-show">No-Show</button>
             </div>
 
+            <!-- TABLE -->
             <div class="card table-card">
                 <table class="users-table" id="appointmentsTable">
                     <thead>
@@ -118,7 +199,9 @@ $appointments = [
                             <tr data-status="<?php echo $appt['status']; ?>">
                                 <td>
                                     <div class="user-cell">
-                                        <div class="table-avatar"><?php echo strtoupper(substr($appt['patient'], 0, 1)); ?></div>
+                                        <div class="table-avatar">
+                                            <?php echo strtoupper(substr($appt['patient'], 0, 1)); ?>
+                                        </div>
                                         <span><?php echo htmlspecialchars($appt['patient']); ?></span>
                                     </div>
                                 </td>
@@ -143,6 +226,7 @@ $appointments = [
         </main>
     </div>
 
+    <!-- LOGOUT MODAL -->
     <div class="modal-overlay" id="logoutModal">
         <div class="modal">
             <div class="modal-icon">
@@ -162,17 +246,26 @@ $appointments = [
     </div>
 
     <script>
+        // Filter functionality
         document.querySelectorAll('.filter-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.filter-btn').forEach(function(b) {
+                    b.classList.remove('active');
+                });
                 this.classList.add('active');
-                const filter = this.dataset.filter;
-                document.querySelectorAll('#appointmentsTable tbody tr').forEach(row => {
-                    row.style.display = (filter === 'all' || row.dataset.status === filter) ? '' : 'none';
+
+                var filter = this.getAttribute('data-filter');
+                document.querySelectorAll('#appointmentsTable tbody tr').forEach(function(row) {
+                    if (filter === 'all' || row.getAttribute('data-status') === filter) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
                 });
             });
         });
 
+        // Logout modal
         function openLogoutModal() {
             document.getElementById('logoutModal').classList.add('show');
         }
