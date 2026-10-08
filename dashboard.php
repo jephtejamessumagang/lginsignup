@@ -50,22 +50,21 @@ $user = $_SESSION['user'];
                 </a>
                 <a href="users.php" class="nav-item">
                     <span class="nav-icon">👤</span> Users
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">📅</span> Appointments
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">🕒</span> Schedules
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">📊</span> Reports
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">📋</span> Activity Log
-                </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">⚙️</span> Settings
-                </a>
+                    <a href="appointments.php" class="nav-item">
+                        <span class="nav-icon">📅</span> Appointments
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">🕒</span> Schedules
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">📊</span> Reports
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">📋</span> Activity Log
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">⚙️</span> Settings
+                    </a>
             </nav>
 
             <div class="sidebar-footer">
