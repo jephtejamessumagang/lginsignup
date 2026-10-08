@@ -184,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 <a href="users.php" class="nav-item active">
                     <span class="nav-icon">👤</span> Users
                 </a>
-                <a href="#" class="nav-item">
+                <a href="appointments.php" class="nav-item">
                     <span class="nav-icon">📅</span> Appointments
                 </a>
                 <a href="#" class="nav-item">
