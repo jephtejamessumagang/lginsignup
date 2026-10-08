@@ -57,7 +57,7 @@
     },
     {
         "id": 8,
-        "patient": "Jephte Sumagang",
+        "patient": "Clark Kent Perino",
         "doctor": "Dr. Vistal",
         "datetime": "2026-08-30 10:00 AM",
         "type": "Annual Check-up",
@@ -65,7 +65,7 @@
     },
     {
         "id": 9,
-        "patient": "Jephte Sumagang",
+        "patient": "james Sumalinog",
         "doctor": "Dr. Vistal",
         "datetime": "2026-08-10 09:00 AM",
         "type": "Consultation",
