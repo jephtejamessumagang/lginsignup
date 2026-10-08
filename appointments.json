@@ -1,0 +1,74 @@
+[
+    {
+        "id": 1,
+        "patient": "Jephte Sumagang",
+        "doctor": "Dr. Vistal",
+        "datetime": "2026-09-17 10:00 AM",
+        "type": "Follow-up",
+        "status": "confirmed"
+    },
+    {
+        "id": 2,
+        "patient": "Maria Santos",
+        "doctor": "Dr. Vistal",
+        "datetime": "2026-09-17 11:00 AM",
+        "type": "Consultation",
+        "status": "checked-in"
+    },
+    {
+        "id": 3,
+        "patient": "Roberto Cruz",
+        "doctor": "Dr. Vistal",
+        "datetime": "2026-09-17 11:00 AM",
+        "type": "New Patient",
+        "status": "pending"
+    },
+    {
+        "id": 4,
+        "patient": "Ana Reyes",
+        "doctor": "Dr. Vistal",
+        "datetime": "2026-09-17 01:00 PM",
+        "type": "Check-up",
+        "status": "confirmed"
+    },
+    {
+        "id": 5,
+        "patient": "Carlos Mendoza",
+        "doctor": "Dr. Vistal",
+        "datetime": "2026-09-16 09:00 AM",
+        "type": "Follow-up",
+        "status": "completed"
+    },
+    {
+        "id": 6,
+        "patient": "Lena Garcia",
+        "doctor": "Dr. Vistal",
+        "datetime": "2026-09-15 02:00 PM",
+        "type": "Consultation",
+        "status": "no-show"
+    },
+    {
+        "id": 7,
+        "patient": "Jephte Sumagang",
+        "doctor": "Dr. Vistal",
+        "datetime": "2026-09-20 03:00 PM",
+        "type": "Follow-up",
+        "status": "pending"
+    },
+    {
+        "id": 8,
+        "patient": "Jephte Sumagang",
+        "doctor": "Dr. Vistal",
+        "datetime": "2026-08-30 10:00 AM",
+        "type": "Annual Check-up",
+        "status": "completed"
+    },
+    {
+        "id": 9,
+        "patient": "Jephte Sumagang",
+        "doctor": "Dr. Vistal",
+        "datetime": "2026-08-10 09:00 AM",
+        "type": "Consultation",
+        "status": "cancelled"
+    }
+]
