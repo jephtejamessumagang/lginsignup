@@ -190,7 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 <a href="schedules.php" class="nav-item">
                     <span class="nav-icon">🕒</span> Schedules
                 </a>
-                <a href="#" class="nav-item">
+                <a href="reports.php" class="nav-item">
                     <span class="nav-icon">📊</span> Reports
                 </a>
                 <a href="#" class="nav-item">

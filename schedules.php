@@ -228,7 +228,7 @@ $timeSlots = [
                 <a href="schedules.php" class="nav-item active">
                     <span class="nav-icon">🕒</span> Schedules
                 </a>
-                <a href="#" class="nav-item">
+                <a href="reports.php" class="nav-item">
                     <span class="nav-icon">📊</span> Reports
                 </a>
                 <a href="#" class="nav-item">
