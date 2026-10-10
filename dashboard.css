@@ -340,7 +340,7 @@ body {
   font-weight: 700;
 }
 
-/* Appointments */
+/* Appointments (Dashboard list) */
 .appointments-list {
   display: flex;
   flex-direction: column;
@@ -763,6 +763,121 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* ========== APPOINTMENTS PAGE ========== */
+
+/* Filter Tabs */
+.filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: #ffffff;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.filter-tab {
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  background: transparent;
+}
+
+.filter-tab:hover {
+  background: #f0fdfa;
+  color: var(--primary);
+}
+
+.filter-tab.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+}
+
+/* Appointment Status Badges */
+.appt-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.appt-status .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Confirmed - green */
+.status-confirmed {
+  background: #ecfdf5;
+  color: #059669;
+}
+.status-confirmed .status-dot {
+  background: #10b981;
+}
+
+/* Pending - amber */
+.status-pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+.status-pending .status-dot {
+  background: #f59e0b;
+}
+
+/* Checked-In - teal */
+.status-checked-in {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+.status-checked-in .status-dot {
+  background: #14b8a6;
+}
+
+/* Completed - blue */
+.status-completed {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.status-completed .status-dot {
+  background: #3b82f6;
+}
+
+/* Cancelled - red */
+.status-cancelled {
+  background: #fef2f2;
+  color: #dc2626;
+}
+.status-cancelled .status-dot {
+  background: #ef4444;
+}
+
+/* No-Show - gray */
+.status-no-show {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.status-no-show .status-dot {
+  background: #94a3b8;
+}
+
+/* Appointments table */
+.appointments-table td {
+  vertical-align: middle;
 }
 
 /* ========== ACTION BUTTONS ========== */
