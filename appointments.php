@@ -315,7 +315,9 @@ if (isset($_GET['edit'])) {
                 <a href="dashboard.php" class="nav-item"><span class="nav-icon">▦</span> Dashboard</a>
                 <a href="users.php" class="nav-item"><span class="nav-icon">👤</span> Users</a>
                 <a href="appointments.php" class="nav-item active"><span class="nav-icon">📅</span> Appointments</a>
-                <a href="#" class="nav-item"><span class="nav-icon">🕒</span> Schedules</a>
+                <a href="schedules.php" class="nav-item">
+                    <span class="nav-icon">🕒</span> Schedules
+                </a>
                 <a href="#" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
                 <a href="#" class="nav-item"><span class="nav-icon">📋</span> Activity Log</a>
                 <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
