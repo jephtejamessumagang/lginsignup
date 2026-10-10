@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Protect page - only logged-in admin can access
+
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     header('Location: index.php');
     exit;
@@ -10,19 +10,19 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
 $user = $_SESSION['user'];
 $appointmentsFile = __DIR__ . '/appointments.json';
 
-// ========== LOAD APPOINTMENTS ==========
+
 $appointments = [];
 if (file_exists($appointmentsFile)) {
     $appointments = json_decode(file_get_contents($appointmentsFile), true) ?? [];
 }
 
-// ========== HELPER: Save appointments ==========
+
 function saveAppointments($file, $data)
 {
     file_put_contents($file, json_encode(array_values($data), JSON_PRETTY_PRINT));
 }
 
-// ========== ADD / EDIT / STATUS UPDATE LOGIC ==========
+
 $errors = [];
 $success = '';
 $editId = null;
