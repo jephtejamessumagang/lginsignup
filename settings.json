@@ -1,0 +1,11 @@
+{
+  "clinic_name": "JJJ GentleCare",
+  "address": "123 Medical Drive, Health City",
+  "phone": "+63 912 345 6789",
+  "email": "info@jjgentlecare.com",
+  "hours": {
+    "monday_friday": "8:00 AM – 5:00 PM",
+    "saturday": "8:00 AM – 12:00 PM",
+    "sunday": "Closed"
+  }
+}
