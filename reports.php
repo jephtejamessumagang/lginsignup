@@ -249,9 +249,7 @@ $cancellationRate = pct($counts['cancelled'], $total);
                 <a href="reports.php" class="nav-item active">
                     <span class="nav-icon">📊</span> Reports
                 </a>
-                <a href="#" class="nav-item">
-                    <span class="nav-icon">📋</span> Activity Log
-                </a>
+                <a href="activity.php" class="nav-item active"><span class="nav-icon">📋</span> Activity Log</a>
                 <a href="#" class="nav-item">
                     <span class="nav-icon">⚙️</span> Settings
                 </a>
