@@ -218,7 +218,7 @@ session_start();
                     <div class="form-group">
                         <div class="label-row">
                             <label for="password">PASSWORD</label>
-                            <a href="#" class="forgot-link">Forgot password?</a>
+                            <a href="forgot-password.php" class="forgot-link">Forgot password?</a>
                         </div>
                         <div class="password-wrapper">
                             <input
