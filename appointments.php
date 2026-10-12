@@ -321,8 +321,13 @@ if (isset($_GET['edit'])) {
                 <a href="reports.php" class="nav-item">
                     <span class="nav-icon">📊</span> Reports
                 </a>
-                <a href="activity.php" class="nav-item active"><span class="nav-icon">📋</span> Activity Log</a>
-                <a href="#" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+                <a href="activity.php" class="nav-item">
+                    <span class="nav-icon">📋</span> Activity Log
+                </a>
+                <a href="settings.php" class="nav-item">
+                    <span class="nav-icon">⚙️</span> Settings
+                </a>
+
             </nav>
 
             <div class="sidebar-footer">
