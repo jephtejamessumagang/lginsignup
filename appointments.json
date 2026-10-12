@@ -13,7 +13,7 @@
         "doctor": "Dr. Vistal",
         "datetime": "2026-09-17 11:00 AM",
         "type": "Consultation",
-        "status": "checked-in"
+        "status": "completed"
     },
     {
         "id": 3,
