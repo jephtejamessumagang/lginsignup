@@ -1,0 +1,37 @@
+[
+    {
+        "id": 1,
+        "actor": "Jack Inihao",
+        "action": "Confirmed appointment for Maria Santos",
+        "type": "success",
+        "time": "9:42 AM"
+    },
+    {
+        "id": 2,
+        "actor": "Dr. Vistal",
+        "action": "Marked Roberto Cruz as No-show",
+        "type": "danger",
+        "time": "9:15 AM"
+    },
+    {
+        "id": 3,
+        "actor": "Jack Inihao",
+        "action": "Booked new appointment for Ana Reyes",
+        "type": "info",
+        "time": "8:55 AM"
+    },
+    {
+        "id": 4,
+        "actor": "Dr. Vistal",
+        "action": "Completed session with Carlos Mendoza",
+        "type": "primary",
+        "time": "8:30 AM"
+    },
+    {
+        "id": 5,
+        "actor": "Jephte Sumagang",
+        "action": "Cancelled appointment #apt9",
+        "type": "warning",
+        "time": "Yesterday"
+    }
+]
