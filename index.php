@@ -55,11 +55,17 @@
                 <p class="subtitle">Sign in to your account to continue</p>
 
                 <?php
-                session_start();
                 if (isset($_SESSION['user'])) {
-                    header('Location: dashboard.php');
-                    exit;
-                }
+    $role = $_SESSION['user']['role'] ?? 'patient';
+    if ($role === 'admin') {
+        header('Location: dashboard.php');
+    } elseif ($role === 'doctor') {
+        header('Location: doctor-dashboard.php');
+    } else {
+        header('Location: dashboard.php');
+    }
+    exit;
+}
                 $errors = [];
                 $email = '';
                 $password = '';
@@ -164,17 +170,16 @@
                                 'role'  => $role
                             ];
 
-                            // Redirect based on role
-                            if ($role === 'admin') {
-                                header('Location: dashboard.php');
-                                exit;
-                            } else {
-                                // You can create other dashboards later
-                                header('Location: dashboard.php');
-                                exit;
-                            }
-                        } else {
-                            $errors[] = "Invalid email or password.";
+                           // Redirect based on role
+if ($role === 'admin') {
+    header('Location: dashboard.php');
+} elseif ($role === 'doctor') {
+    header('Location: doctor-dashboard.php');
+} else {
+    // staff / patient for now
+    header('Location: dashboard.php');
+}
+exit;
                         }
                     }
                 }
