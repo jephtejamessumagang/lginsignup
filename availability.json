@@ -1,0 +1,52 @@
+{
+    "MON": {
+        "8 AM": "open",
+        "9 AM": "open",
+        "10 AM": "open",
+        "11 AM": "open",
+        "1 PM": "open",
+        "2 PM": "open",
+        "3 PM": "open",
+        "4 PM": "open"
+    },
+    "TUE": {
+        "8 AM": "open",
+        "9 AM": "open",
+        "10 AM": "blocked",
+        "11 AM": "open",
+        "1 PM": "blocked",
+        "2 PM": "open",
+        "3 PM": "open",
+        "4 PM": "open"
+    },
+    "WED": {
+        "8 AM": "open",
+        "9 AM": "open",
+        "10 AM": "open",
+        "11 AM": "open",
+        "1 PM": "open",
+        "2 PM": "open",
+        "3 PM": "blocked",
+        "4 PM": "blocked"
+    },
+    "THU": {
+        "8 AM": "open",
+        "9 AM": "blocked",
+        "10 AM": "open",
+        "11 AM": "open",
+        "1 PM": "open",
+        "2 PM": "open",
+        "3 PM": "open",
+        "4 PM": "open"
+    },
+    "FRI": {
+        "8 AM": "open",
+        "9 AM": "open",
+        "10 AM": "open",
+        "11 AM": "blocked",
+        "1 PM": "blocked",
+        "2 PM": "open",
+        "3 PM": "open",
+        "4 PM": "open"
+    }
+}
