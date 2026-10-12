@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -61,11 +64,14 @@
                         header('Location: dashboard.php');
                     } elseif ($role === 'doctor') {
                         header('Location: doctor-dashboard.php');
+                    } elseif ($role === 'staff') {
+                        header('Location: staff-schedule.php');
                     } else {
                         header('Location: dashboard.php');
                     }
                     exit;
                 }
+
                 $errors = [];
                 $email = '';
                 $password = '';
@@ -129,11 +135,6 @@
                         }
 
                         if ($valid_login) {
-                            // Start session and set user data
-                            if (session_status() === PHP_SESSION_NONE) {
-                                session_start();
-                            }
-
                             // Determine role and name
                             $role = 'patient';
                             $fullName = 'User';
@@ -157,7 +158,7 @@
                                     foreach ($users as $user) {
                                         if (strtolower($user['email']) === $emailLower) {
                                             $fullName = $user['name'];
-                                            $role = 'patient'; // default for registered users
+                                            $role = 'patient';
                                             break;
                                         }
                                     }
@@ -175,11 +176,14 @@
                                 header('Location: dashboard.php');
                             } elseif ($role === 'doctor') {
                                 header('Location: doctor-dashboard.php');
+                            } elseif ($role === 'staff') {
+                                header('Location: staff-schedule.php');
                             } else {
-                                // staff / patient for now
                                 header('Location: dashboard.php');
                             }
                             exit;
+                        } else {
+                            $errors[] = "Invalid email or password.";
                         }
                     }
                 }
