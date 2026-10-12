@@ -56,16 +56,18 @@
 
                 <?php
                 if (isset($_SESSION['user'])) {
-    $role = $_SESSION['user']['role'] ?? 'patient';
-    if ($role === 'admin') {
-        header('Location: dashboard.php');
-    } elseif ($role === 'doctor') {
-        header('Location: doctor-dashboard.php');
-    } else {
-        header('Location: dashboard.php');
-    }
-    exit;
-}
+                    $role = $_SESSION['user']['role'] ?? 'patient';
+                    if ($role === 'admin') {
+                        header('Location: dashboard.php');
+                    } elseif ($role === 'doctor') {
+                        header('Location: doctor-dashboard.php');
+                    } elseif ($role === 'staff') {
+                        header('Location: staff-schedule.php');
+                    } else {
+                        header('Location: dashboard.php');
+                    }
+                    exit;
+                }
                 $errors = [];
                 $email = '';
                 $password = '';
@@ -170,16 +172,16 @@
                                 'role'  => $role
                             ];
 
-                           // Redirect based on role
-if ($role === 'admin') {
-    header('Location: dashboard.php');
-} elseif ($role === 'doctor') {
-    header('Location: doctor-dashboard.php');
-} else {
-    // staff / patient for now
-    header('Location: dashboard.php');
-}
-exit;
+                            // Redirect based on role
+                            if ($role === 'admin') {
+                                header('Location: dashboard.php');
+                            } elseif ($role === 'doctor') {
+                                header('Location: doctor-dashboard.php');
+                            } else {
+                                // staff / patient for now
+                                header('Location: dashboard.php');
+                            }
+                            exit;
                         }
                     }
                 }
