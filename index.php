@@ -61,8 +61,6 @@
                         header('Location: dashboard.php');
                     } elseif ($role === 'doctor') {
                         header('Location: doctor-dashboard.php');
-                    } elseif ($role === 'staff') {
-                        header('Location: staff-schedule.php');
                     } else {
                         header('Location: dashboard.php');
                     }
