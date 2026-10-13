@@ -7,6 +7,18 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'patient') {
 }
 
 $user = $_SESSION['user'];
+
+// Load profile avatar for sidebar
+$sidebarAvatar = '';
+$profilesFileSidebar = __DIR__ . '/profiles.json';
+if (file_exists($profilesFileSidebar)) {
+    $allProfiles = json_decode(file_get_contents($profilesFileSidebar), true) ?? [];
+    $key = strtolower($user['email'] ?? $user['name'] ?? '');
+    if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
+        $sidebarAvatar = $allProfiles[$key]['avatar'];
+    }
+}
+
 $profilesFile = __DIR__ . '/profiles.json';
 $uploadDir = __DIR__ . '/uploads';
 
@@ -93,6 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $newName = 'avatar_' . preg_replace('/[^a-z0-9]/i', '_', $emailKey) . '_' . time() . '.' . strtolower($ext);
             $dest = $uploadDir . '/' . $newName;
             if (move_uploaded_file($file['tmp_name'], $dest)) {
+                // Remove old avatar if local
                 if (!empty($avatarPath) && strpos($avatarPath, 'uploads/') === 0) {
                     $old = __DIR__ . '/' . $avatarPath;
                     if (file_exists($old)) @unlink($old);
@@ -116,6 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $profiles[$emailKey] = $profile;
         file_put_contents($profilesFile, json_encode($profiles, JSON_PRETTY_PRINT));
 
+        // Update session name if changed
         $_SESSION['user']['name'] = $fullName;
         if (!empty($email)) {
             $_SESSION['user']['email'] = $email;
@@ -123,6 +137,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         $success = "Profile saved successfully!";
         $user = $_SESSION['user'];
+        // Refresh sidebar avatar after save
+        if (!empty($avatarPath) && file_exists(__DIR__ . '/' . $avatarPath)) {
+            $sidebarAvatar = $avatarPath;
+        }
     }
 }
 
@@ -294,7 +312,13 @@ $initial = strtoupper(substr($profile['full_name'], 0, 1));
             </div>
 
             <div class="user-card">
-                <div class="avatar"><?php echo strtoupper(substr($user['name'], 0, 1)); ?></div>
+                <div class="avatar" style="overflow:hidden;padding:0;">
+                    <?php if (!empty($sidebarAvatar)): ?>
+                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                    <?php else: ?>
+                        <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
+                    <?php endif; ?>
+                </div>
                 <div>
                     <div class="user-name"><?php echo htmlspecialchars($user['name']); ?></div>
                     <div class="user-role">Patient</div>
