@@ -32,7 +32,7 @@ usort($myAppointments, function ($a, $b) {
 
 $refDate = '2026-09-17';
 
-// Next upcoming appointment (confirmed / pending / checked-in)
+// Next upcoming appointment
 $nextAppt = null;
 foreach ($myAppointments as $appt) {
     $status = strtolower($appt['status'] ?? '');
@@ -43,7 +43,7 @@ foreach ($myAppointments as $appt) {
     }
 }
 
-// Past / completed visits
+// Past visits
 $pastVisits = [];
 foreach ($myAppointments as $appt) {
     $status = strtolower($appt['status'] ?? '');
@@ -51,7 +51,6 @@ foreach ($myAppointments as $appt) {
         $pastVisits[] = $appt;
     }
 }
-// Newest first for history
 usort($pastVisits, function ($a, $b) {
     return strcmp($b['datetime'], $a['datetime']);
 });
@@ -214,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             display: grid;
             grid-template-columns: 1.2fr 1fr;
             gap: 16px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .action-card {
@@ -329,7 +328,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         #historyPanel {
             display: none;
-            margin-top: 8px;
         }
 
         #historyPanel.show {
@@ -474,35 +472,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 </div>
             </div>
 
-            <!-- History Panel (shown when History is clicked) -->
-            <div class="section-card" id="historyPanel">
-                <h3>Past Visits</h3>
-                <?php if (empty($pastVisits)): ?>
-                    <p class="empty-msg">No past visits yet.</p>
-                <?php else: ?>
-                    <?php foreach ($pastVisits as $v): ?>
-                        <?php
-                        $st = strtolower($v['status']);
-                        $lab = ucwords(str_replace('-', ' ', $st));
-                        ?>
-                        <div class="visit-row">
-                            <div class="visit-icon">✓</div>
-                            <div class="visit-info">
-                                <div class="visit-title"><?php echo htmlspecialchars($v['type']); ?></div>
-                                <div class="visit-meta">
-                                    <?php echo htmlspecialchars($v['datetime']); ?> · <?php echo htmlspecialchars($v['doctor']); ?>
-                                </div>
-                            </div>
-                            <span class="appt-status status-<?php echo $st; ?>">
-                                <span class="status-dot"></span>
-                                <?php echo htmlspecialchars($lab); ?>
-                            </span>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-
-            <!-- Recent Visits -->
+            <!-- Recent Visits (right below Book / History) -->
             <div class="section-card">
                 <h3>Recent Visits</h3>
                 <?php
@@ -522,6 +492,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                 <div class="visit-title"><?php echo htmlspecialchars($v['type']); ?></div>
                                 <div class="visit-meta">
                                     <?php echo htmlspecialchars(substr($v['datetime'], 0, 10)); ?> · <?php echo htmlspecialchars($v['doctor']); ?>
+                                </div>
+                            </div>
+                            <span class="appt-status status-<?php echo $st; ?>">
+                                <span class="status-dot"></span>
+                                <?php echo htmlspecialchars($lab); ?>
+                            </span>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+
+            <!-- Full History Panel (shown when History is clicked) -->
+            <div class="section-card" id="historyPanel">
+                <h3>Past Visits</h3>
+                <?php if (empty($pastVisits)): ?>
+                    <p class="empty-msg">No past visits yet.</p>
+                <?php else: ?>
+                    <?php foreach ($pastVisits as $v): ?>
+                        <?php
+                        $st = strtolower($v['status']);
+                        $lab = ucwords(str_replace('-', ' ', $st));
+                        ?>
+                        <div class="visit-row">
+                            <div class="visit-icon">✓</div>
+                            <div class="visit-info">
+                                <div class="visit-title"><?php echo htmlspecialchars($v['type']); ?></div>
+                                <div class="visit-meta">
+                                    <?php echo htmlspecialchars($v['datetime']); ?> · <?php echo htmlspecialchars($v['doctor']); ?>
                                 </div>
                             </div>
                             <span class="appt-status status-<?php echo $st; ?>">
