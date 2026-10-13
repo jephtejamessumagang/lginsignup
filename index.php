@@ -58,6 +58,7 @@ session_start();
                 <p class="subtitle">Sign in to your account to continue</p>
 
                 <?php
+                // Already logged in → redirect by role
                 if (isset($_SESSION['user'])) {
                     $role = $_SESSION['user']['role'] ?? 'patient';
                     if ($role === 'admin') {
@@ -66,6 +67,8 @@ session_start();
                         header('Location: doctor-dashboard.php');
                     } elseif ($role === 'staff') {
                         header('Location: staff-schedule.php');
+                    } elseif ($role === 'patient') {
+                        header('Location: patient-home.php');
                     } else {
                         header('Location: dashboard.php');
                     }
@@ -178,6 +181,8 @@ session_start();
                                 header('Location: doctor-dashboard.php');
                             } elseif ($role === 'staff') {
                                 header('Location: staff-schedule.php');
+                            } elseif ($role === 'patient') {
+                                header('Location: patient-home.php');
                             } else {
                                 header('Location: dashboard.php');
                             }
