@@ -103,6 +103,7 @@ $total = count($myAppointments);
     <link rel="stylesheet" href="dashboard.css">
     <style>
         .appt-list {
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
             gap: 14px;
