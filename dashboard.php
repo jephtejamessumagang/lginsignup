@@ -246,7 +246,7 @@ if (file_exists($profilesFileSidebar)) {
                 docChange: "All on duty",
                 compChange: "73% completion",
                 list: [{
-                        name: "Jephte Sumagang",
+                        name: "Jephte James Sumagang",
                         time: "08:30 AM · Follow-up",
                         status: "confirmed",
                         initial: "JS"
@@ -281,7 +281,7 @@ if (file_exists($profilesFileSidebar)) {
                 docChange: "All on duty",
                 compChange: "58% completion",
                 list: [{
-                        name: "Jephte Sumagang",
+                        name: "Jephte James Sumagang",
                         time: "09:00 AM · Follow-up",
                         status: "confirmed",
                         initial: "JS"
