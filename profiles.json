@@ -13,5 +13,13 @@
         "phone": "+63 912 345 6789",
         "position": "System Administrator",
         "avatar": "uploads\/avatar_admin_gentlecare_com_1791942510.jpg"
+    },
+    "doctor@gentlecare.com": {
+        "full_name": "Dr. Vistal",
+        "email": "doctor@gentlecare.com",
+        "phone": "+63 912 345 6789",
+        "specialty": "General Medicine",
+        "license": "MD-2024-001",
+        "avatar": "uploads\/avatar_doctor_gentlecare_com_1791943618.jpg"
     }
 }
