@@ -6,5 +6,12 @@
         "dob": "May 25, 2002",
         "blood_type": "O+",
         "avatar": "uploads\/avatar_patient_gentlecare_com_1791883817.png"
+    },
+    "admin@gentlecare.com": {
+        "full_name": "Jephte Sumagang",
+        "email": "admin@gentlecare.com",
+        "phone": "+63 912 345 6789",
+        "position": "System Administrator",
+        "avatar": "uploads\/avatar_admin_gentlecare_com_1791942510.jpg"
     }
 }
