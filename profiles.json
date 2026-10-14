@@ -21,5 +21,12 @@
         "specialty": "General Medicine",
         "license": "MD-2024-001",
         "avatar": "uploads\/avatar_doctor_gentlecare_com_1791943618.jpg"
+    },
+    "staff@gentlecare.com": {
+        "full_name": "Jack Norris Inihao",
+        "email": "staff@gentlecare.com",
+        "phone": "+63 912 345 6789",
+        "position": "Clinic Staff",
+        "avatar": "uploads\/avatar_staff_gentlecare_com_1791944641.jpg"
     }
 }
