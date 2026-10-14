@@ -74,17 +74,20 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
         .availability-card {
             background: white;
             border-radius: 18px;
-            padding: 28px;
+            padding: 32px 36px;
             border: 1px solid #e2e8f0;
             box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
-            max-width: 720px;
+            width: 100%;
+            max-width: 960px;
+            margin: 0 auto;
         }
 
         .avail-grid {
             display: grid;
-            grid-template-columns: 70px repeat(5, 1fr);
-            gap: 10px;
-            margin-bottom: 24px;
+            grid-template-columns: 80px repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 28px;
+            width: 100%;
         }
 
         .avail-header {
@@ -109,15 +112,16 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
         .slot-btn {
             display: block;
             width: 100%;
-            padding: 12px 8px;
-            border-radius: 10px;
-            font-size: 0.82rem;
+            padding: 16px 10px;
+            border-radius: 12px;
+            font-size: 0.9rem;
             font-weight: 600;
             text-align: center;
             border: none;
             cursor: pointer;
             transition: all 0.2s ease;
             font-family: inherit;
+            min-height: 48px;
         }
 
         .slot-btn.open {
@@ -146,6 +150,7 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
             gap: 24px;
             font-size: 0.85rem;
             color: #64748b;
+            justify-content: center;
         }
 
         .legend-item {
@@ -168,6 +173,13 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
         .legend-swatch.blocked {
             background: #f1f5f9;
             border: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 900px) {
+            .availability-card {
+                padding: 20px;
+                max-width: 100%;
+            }
         }
 
         @media (max-width: 700px) {
