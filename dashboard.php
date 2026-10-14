@@ -345,7 +345,7 @@ if (file_exists($profilesFileSidebar)) {
                 docChange: "1 off duty",
                 compChange: "Not started",
                 list: [{
-                        name: "Jephte Sumagang",
+                        name: "Jephte James Sumagang",
                         time: "08:00 AM · New Patient",
                         status: "pending",
                         initial: "JS"
