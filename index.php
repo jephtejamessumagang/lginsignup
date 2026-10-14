@@ -237,7 +237,7 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                 <div class="demo-grid">
                     <div class="demo-card admin" onclick="fillDemo('admin@gentlecare.com')">
                         <span class="demo-role admin-role">ADMIN</span>
-                        <span class="demo-name">Jephte Sumagang</span>
+                        <span class="demo-name">Jephte James Sumagang</span>
                         <span class="demo-desc">Full system access</span>
                     </div>
                     <div class="demo-card doctor" onclick="fillDemo('doctor@gentlecare.com')">
@@ -252,7 +252,7 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                     </div>
                     <div class="demo-card patient" onclick="fillDemo('patient@gentlecare.com')">
                         <span class="demo-role patient-role">PATIENT</span>
-                        <span class="demo-name">Jephte Sumagang</span>
+                        <span class="demo-name">Jephte James Sumagang</span>
                         <span class="demo-desc">Patient portal</span>
                     </div>
                 </div>
