@@ -8,6 +8,18 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'doctor') {
 }
 
 $user = $_SESSION['user'];
+
+// Load profile avatar for sidebar
+$sidebarAvatar = '';
+$profilesFileSidebar = __DIR__ . '/profiles.json';
+if (file_exists($profilesFileSidebar)) {
+    $allProfiles = json_decode(file_get_contents($profilesFileSidebar), true) ?? [];
+    $key = strtolower($user['email'] ?? $user['name'] ?? '');
+    if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
+        $sidebarAvatar = $allProfiles[$key]['avatar'];
+    }
+}
+
 $appointmentsFile = __DIR__ . '/appointments.json';
 
 // Load appointments
@@ -69,6 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         if ($found) {
             file_put_contents($appointmentsFile, json_encode(array_values($appointments), JSON_PRETTY_PRINT));
+            $success = "Status updated successfully!";
+            // Refresh data
             header('Location: doctor-dashboard.php');
             exit;
         } else {
@@ -99,6 +113,7 @@ $upcomingCount = count($upcomingPatients);
     <title>Doctor Dashboard - JJJ GentleCare</title>
     <link rel="stylesheet" href="dashboard.css">
     <style>
+        /* ========== DOCTOR DASHBOARD STYLES ========== */
         .doctor-banner {
             background: linear-gradient(135deg, #0d9488, #0f766e);
             border-radius: 18px;
@@ -152,6 +167,7 @@ $upcomingCount = count($upcomingPatients);
             font-size: 1.8rem;
             font-weight: 700;
             color: #1e293b;
+            line-height: 1.2;
         }
 
         .doctor-stat-label {
@@ -234,6 +250,7 @@ $upcomingCount = count($upcomingPatients);
             font-weight: 600;
             cursor: pointer;
             font-family: inherit;
+            transition: background 0.15s;
         }
 
         .btn-done:hover {
@@ -250,12 +267,19 @@ $upcomingCount = count($upcomingPatients);
             font-weight: 600;
             cursor: pointer;
             font-family: inherit;
+            transition: all 0.15s;
         }
 
         .btn-noshow:hover {
             background: #fef2f2;
             color: #dc2626;
             border-color: #fecaca;
+        }
+
+        /* Sidebar override for doctor */
+        .sidebar .nav-item.active {
+            background: #0d9488;
+            color: white;
         }
 
         @media (max-width: 900px) {
@@ -295,7 +319,13 @@ $upcomingCount = count($upcomingPatients);
             </div>
 
             <div class="user-card">
-                <div class="avatar"><?php echo strtoupper(substr($user['name'], 0, 1)); ?></div>
+                <div class="avatar" style="overflow:hidden;padding:0;">
+                    <?php if (!empty($sidebarAvatar)): ?>
+                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">
+                    <?php else: ?>
+                        <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
+                    <?php endif; ?>
+                </div>
                 <div>
                     <div class="user-name"><?php echo htmlspecialchars($user['name']); ?></div>
                     <div class="user-role">Physician</div>
@@ -315,6 +345,9 @@ $upcomingCount = count($upcomingPatients);
                 <a href="doctor-availability.php" class="nav-item">
                     <span class="nav-icon">🕒</span> Availability
                 </a>
+                <a href="doctor-profile.php" class="nav-item">
+                    <span class="nav-icon">👤</span> Profile
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -326,6 +359,17 @@ $upcomingCount = count($upcomingPatients);
 
         <!-- MAIN CONTENT -->
         <main class="main">
+            <?php if ($success): ?>
+                <div class="alert alert-success" style="margin-bottom:20px;"><?php echo htmlspecialchars($success); ?></div>
+            <?php endif; ?>
+            <?php if (!empty($errors)): ?>
+                <div class="alert alert-error" style="margin-bottom:20px;">
+                    <?php foreach ($errors as $e): ?>
+                        <div><?php echo htmlspecialchars($e); ?></div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
             <!-- Greeting Banner -->
             <div class="doctor-banner">
                 <div class="doctor-banner-avatar">👨‍⚕️</div>
@@ -354,6 +398,7 @@ $upcomingCount = count($upcomingPatients);
             <!-- Today's Patients -->
             <div class="section-card">
                 <h3>Today's Patients</h3>
+
                 <?php if (empty($todayPatients)): ?>
                     <p style="color:#94a3b8; text-align:center; padding:20px 0;">No patients scheduled for today.</p>
                 <?php else: ?>
@@ -366,7 +411,9 @@ $upcomingCount = count($upcomingPatients);
                         if (isset($parts[1])) $timePart = $parts[1];
                         ?>
                         <div class="patient-row">
-                            <div class="patient-avatar"><?php echo strtoupper(substr($p['patient'], 0, 1)); ?></div>
+                            <div class="patient-avatar">
+                                <?php echo strtoupper(substr($p['patient'], 0, 1)); ?>
+                            </div>
                             <div class="patient-info">
                                 <div class="patient-name"><?php echo htmlspecialchars($p['patient']); ?></div>
                                 <div class="patient-meta"><?php echo htmlspecialchars($timePart); ?> · <?php echo htmlspecialchars($p['type']); ?></div>
@@ -376,6 +423,7 @@ $upcomingCount = count($upcomingPatients);
                                     <span class="status-dot"></span>
                                     <?php echo htmlspecialchars($label); ?>
                                 </span>
+
                                 <?php if (!in_array($status, ['completed', 'no-show', 'cancelled'])): ?>
                                     <form method="POST" style="display:inline;" onsubmit="return confirm('Mark as completed?');">
                                         <input type="hidden" name="action" value="update_status">
@@ -399,6 +447,7 @@ $upcomingCount = count($upcomingPatients);
             <!-- Upcoming Patients -->
             <div class="section-card">
                 <h3>Upcoming Patients</h3>
+
                 <?php if (empty($upcomingPatients)): ?>
                     <p style="color:#94a3b8; text-align:center; padding:20px 0;">No upcoming patients.</p>
                 <?php else: ?>
@@ -408,7 +457,9 @@ $upcomingCount = count($upcomingPatients);
                         $label = ucwords(str_replace('-', ' ', $status));
                         ?>
                         <div class="patient-row">
-                            <div class="patient-avatar"><?php echo strtoupper(substr($p['patient'], 0, 1)); ?></div>
+                            <div class="patient-avatar">
+                                <?php echo strtoupper(substr($p['patient'], 0, 1)); ?>
+                            </div>
                             <div class="patient-info">
                                 <div class="patient-name"><?php echo htmlspecialchars($p['patient']); ?></div>
                                 <div class="patient-meta"><?php echo htmlspecialchars($p['datetime']); ?></div>

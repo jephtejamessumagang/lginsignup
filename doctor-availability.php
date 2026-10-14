@@ -8,6 +8,18 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'doctor') {
 }
 
 $user = $_SESSION['user'];
+
+// Load profile avatar for sidebar
+$sidebarAvatar = '';
+$profilesFileSidebar = __DIR__ . '/profiles.json';
+if (file_exists($profilesFileSidebar)) {
+    $allProfiles = json_decode(file_get_contents($profilesFileSidebar), true) ?? [];
+    $key = strtolower($user['email'] ?? $user['name'] ?? '');
+    if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
+        $sidebarAvatar = $allProfiles[$key]['avatar'];
+    }
+}
+
 $availabilityFile = __DIR__ . '/availability.json';
 
 // Default structure
@@ -58,6 +70,7 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
     <title>My Availability - JJJ GentleCare</title>
     <link rel="stylesheet" href="dashboard.css">
     <style>
+        /* ========== AVAILABILITY STYLES ========== */
         .availability-card {
             background: white;
             border-radius: 18px;
@@ -172,6 +185,7 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
 
 <body>
     <div class="layout">
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -188,7 +202,13 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
             </div>
 
             <div class="user-card">
-                <div class="avatar"><?php echo strtoupper(substr($user['name'], 0, 1)); ?></div>
+                <div class="avatar" style="overflow:hidden;padding:0;">
+                    <?php if (!empty($sidebarAvatar)): ?>
+                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">
+                    <?php else: ?>
+                        <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
+                    <?php endif; ?>
+                </div>
                 <div>
                     <div class="user-name"><?php echo htmlspecialchars($user['name']); ?></div>
                     <div class="user-role">Physician</div>
@@ -208,6 +228,9 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
                 <a href="doctor-availability.php" class="nav-item active">
                     <span class="nav-icon">🕒</span> Availability
                 </a>
+                <a href="doctor-profile.php" class="nav-item">
+                    <span class="nav-icon">👤</span> Profile
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -217,6 +240,7 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
             </div>
         </aside>
 
+        <!-- MAIN CONTENT -->
         <main class="main">
             <header class="topbar">
                 <div>
@@ -227,11 +251,13 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
 
             <div class="availability-card">
                 <div class="avail-grid">
+                    <!-- Header row -->
                     <div></div>
                     <?php foreach ($days as $day): ?>
                         <div class="avail-header"><?php echo $day; ?></div>
                     <?php endforeach; ?>
 
+                    <!-- Time rows -->
                     <?php foreach ($times as $time): ?>
                         <div class="avail-time"><?php echo $time; ?></div>
                         <?php foreach ($days as $day): ?>
@@ -251,6 +277,7 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
                     <?php endforeach; ?>
                 </div>
 
+                <!-- Legend -->
                 <div class="legend">
                     <div class="legend-item">
                         <div class="legend-swatch open"></div>
@@ -265,6 +292,7 @@ $times = ['8 AM', '9 AM', '10 AM', '11 AM', '1 PM', '2 PM', '3 PM', '4 PM'];
         </main>
     </div>
 
+    <!-- LOGOUT MODAL -->
     <div class="modal-overlay" id="logoutModal">
         <div class="modal">
             <div class="modal-icon">

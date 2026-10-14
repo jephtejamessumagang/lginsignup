@@ -8,6 +8,18 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'doctor') {
 }
 
 $user = $_SESSION['user'];
+
+// Load profile avatar for sidebar
+$sidebarAvatar = '';
+$profilesFileSidebar = __DIR__ . '/profiles.json';
+if (file_exists($profilesFileSidebar)) {
+    $allProfiles = json_decode(file_get_contents($profilesFileSidebar), true) ?? [];
+    $key = strtolower($user['email'] ?? $user['name'] ?? '');
+    if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
+        $sidebarAvatar = $allProfiles[$key]['avatar'];
+    }
+}
+
 $appointmentsFile = __DIR__ . '/appointments.json';
 
 // Load appointments
@@ -53,9 +65,9 @@ for ($i = 0; $i < 7; $i++) {
     $d->modify("+$i days");
     $weekDays[] = [
         'date' => $d->format('Y-m-d'),
-        'day'  => $d->format('j'),
-        'dow'  => strtoupper($d->format('D')),
-        'full' => $d->format('F j'),
+        'day'  => $d->format('j'),          // 13, 14, ...
+        'dow'  => strtoupper($d->format('D')), // SUN, MON...
+        'full' => $d->format('F j'),        // September 17
     ];
 }
 
@@ -104,6 +116,7 @@ if (!$selectedFull) {
     <title>My Calendar - JJJ GentleCare</title>
     <link rel="stylesheet" href="dashboard.css">
     <style>
+        /* ========== DOCTOR CALENDAR STYLES ========== */
         .week-strip {
             display: flex;
             gap: 8px;
@@ -290,7 +303,13 @@ if (!$selectedFull) {
             </div>
 
             <div class="user-card">
-                <div class="avatar"><?php echo strtoupper(substr($user['name'], 0, 1)); ?></div>
+                <div class="avatar" style="overflow:hidden;padding:0;">
+                    <?php if (!empty($sidebarAvatar)): ?>
+                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">
+                    <?php else: ?>
+                        <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
+                    <?php endif; ?>
+                </div>
                 <div>
                     <div class="user-name"><?php echo htmlspecialchars($user['name']); ?></div>
                     <div class="user-role">Physician</div>
@@ -309,6 +328,9 @@ if (!$selectedFull) {
                 </a>
                 <a href="doctor-availability.php" class="nav-item">
                     <span class="nav-icon">🕒</span> Availability
+                </a>
+                <a href="doctor-profile.php" class="nav-item">
+                    <span class="nav-icon">👤</span> Profile
                 </a>
             </nav>
 
@@ -366,6 +388,7 @@ if (!$selectedFull) {
                         $timePart = '';
                         $parts = explode(' ', $appt['datetime'], 2);
                         if (isset($parts[1])) {
+                            // Show only hour part like "09 AM"
                             $t = DateTime::createFromFormat('h:i A', $parts[1]);
                             $timePart = $t ? $t->format('h A') : $parts[1];
                         }
