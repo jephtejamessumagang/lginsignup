@@ -8,6 +8,18 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'staff') {
 }
 
 $user = $_SESSION['user'];
+
+// Load profile avatar for sidebar
+$sidebarAvatar = '';
+$profilesFileSidebar = __DIR__ . '/profiles.json';
+if (file_exists($profilesFileSidebar)) {
+    $allProfiles = json_decode(file_get_contents($profilesFileSidebar), true) ?? [];
+    $key = strtolower($user['email'] ?? $user['name'] ?? '');
+    if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
+        $sidebarAvatar = $allProfiles[$key]['avatar'];
+    }
+}
+
 $appointmentsFile = __DIR__ . '/appointments.json';
 
 // Load appointments
@@ -38,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-// Queue = today's appointments that are still waiting (confirmed, checked-in, or pending)
+// Queue = today's appointments that are still waiting (confirmed or checked-in)
 $queue = [];
 foreach ($appointments as $appt) {
     if (strpos($appt['datetime'], $today) !== 0) continue;
@@ -258,7 +270,13 @@ $count = count($queue);
             </div>
 
             <div class="user-card">
-                <div class="avatar"><?php echo strtoupper(substr($user['name'], 0, 1)); ?></div>
+                <div class="avatar" style="overflow:hidden;padding:0;">
+                    <?php if (!empty($sidebarAvatar)): ?>
+                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">
+                    <?php else: ?>
+                        <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
+                    <?php endif; ?>
+                </div>
                 <div>
                     <div class="user-name"><?php echo htmlspecialchars($user['name']); ?></div>
                     <div class="user-role">Clinic Staff</div>
@@ -277,6 +295,9 @@ $count = count($queue);
                 </a>
                 <a href="staff-appointments.php" class="nav-item">
                     <span class="nav-icon">📋</span> All Appointments
+                </a>
+                <a href="staff-profile.php" class="nav-item">
+                    <span class="nav-icon">👤</span> Profile
                 </a>
             </nav>
 
