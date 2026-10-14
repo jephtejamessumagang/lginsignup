@@ -1,28 +1,40 @@
 <?php
 session_start();
 
-
+// Protect page - only logged-in admin can access
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     header('Location: index.php');
     exit;
 }
 
 $user = $_SESSION['user'];
+
+// Load profile avatar for sidebar
+$sidebarAvatar = '';
+$profilesFileSidebar = __DIR__ . '/profiles.json';
+if (file_exists($profilesFileSidebar)) {
+    $allProfiles = json_decode(file_get_contents($profilesFileSidebar), true) ?? [];
+    $key = strtolower($user['email'] ?? $user['name'] ?? '');
+    if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
+        $sidebarAvatar = $allProfiles[$key]['avatar'];
+    }
+}
+
 $appointmentsFile = __DIR__ . '/appointments.json';
 
-
+// ========== LOAD APPOINTMENTS ==========
 $appointments = [];
 if (file_exists($appointmentsFile)) {
     $appointments = json_decode(file_get_contents($appointmentsFile), true) ?? [];
 }
 
-
+// ========== HELPER: Save appointments ==========
 function saveAppointments($file, $data)
 {
     file_put_contents($file, json_encode(array_values($data), JSON_PRETTY_PRINT));
 }
 
-
+// ========== ADD / EDIT / STATUS UPDATE LOGIC ==========
 $errors = [];
 $success = '';
 $editId = null;
@@ -72,10 +84,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
 
         if (empty($errors)) {
+            // Convert time to 12-hour format for display consistency
             $timeObj = DateTime::createFromFormat('H:i', $time);
             $displayTime = $timeObj ? $timeObj->format('h:i A') : $time;
             $datetime = $date . ' ' . $displayTime;
 
+            // Generate next ID
             $maxId = 0;
             foreach ($appointments as $a) {
                 if (isset($a['id']) && $a['id'] > $maxId) $maxId = $a['id'];
@@ -105,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $type     = trim($_POST['type'] ?? '');
         $status   = strtolower(trim($_POST['status'] ?? 'pending'));
 
+        // Validations (same as add)
         if ($patient === '') {
             $errors[] = "Patient name is required.";
         } elseif (!preg_match("/^[A-Za-z .'-]{2,50}$/", $patient)) {
@@ -156,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     }
 
-    // ---------- QUICK STATUS UPDATE ----------
+    // ---------- QUICK STATUS UPDATE (Check-in / Cancel / Complete / etc.) ----------
     if ($action === 'update_status') {
         $id     = (int)($_POST['id'] ?? 0);
         $status = strtolower(trim($_POST['status'] ?? ''));
@@ -222,8 +237,10 @@ if (isset($_GET['edit'])) {
     foreach ($appointments as $a) {
         if ((int)$a['id'] === $editId) {
             $editData = $a;
+            // Parse datetime back to date + time for form
             $parts = explode(' ', $a['datetime'], 2);
             $editData['date'] = $parts[0] ?? '';
+            // Convert 12h back to 24h for input[type=time]
             if (isset($parts[1])) {
                 $t = DateTime::createFromFormat('h:i A', $parts[1]);
                 $editData['time'] = $t ? $t->format('H:i') : '';
@@ -237,48 +254,6 @@ if (isset($_GET['edit'])) {
 <html lang="en">
 
 <head>
-    <style>
-        /* FORCE FILTER TABS */
-        .filter-tabs {
-            display: flex !important;
-            flex-wrap: wrap !important;
-            gap: 8px !important;
-            margin-bottom: 24px !important;
-            background: transparent !important;
-            padding: 0 !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-
-        .filter-tab {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 8px 18px !important;
-            border-radius: 9999px !important;
-            font-size: 0.875rem !important;
-            font-weight: 600 !important;
-            color: #64748b !important;
-            text-decoration: none !important;
-            background: #ffffff !important;
-            border: 1.5px solid #e2e8f0 !important;
-            transition: all 0.15s ease !important;
-            white-space: nowrap !important;
-        }
-
-        .filter-tab:hover {
-            background: #f0fdfa !important;
-            border-color: #99f6e4 !important;
-            color: #0d9488 !important;
-        }
-
-        .filter-tab.active {
-            background: #0d9488 !important;
-            color: #ffffff !important;
-            border-color: #0d9488 !important;
-            box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25) !important;
-        }
-    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Appointments - JJJ GentleCare</title>
@@ -287,7 +262,7 @@ if (isset($_GET['edit'])) {
 
 <body>
     <div class="layout">
-        <!-- SIDEBAR (same as before) -->
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -304,7 +279,13 @@ if (isset($_GET['edit'])) {
             </div>
 
             <div class="user-card">
-                <div class="avatar"><?php echo strtoupper(substr($user['name'], 0, 1)); ?></div>
+                <div class="avatar" style="overflow:hidden;padding:0;">
+                    <?php if (!empty($sidebarAvatar)): ?>
+                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">
+                    <?php else: ?>
+                        <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
+                    <?php endif; ?>
+                </div>
                 <div>
                     <div class="user-name"><?php echo htmlspecialchars($user['name']); ?></div>
                     <div class="user-role"><?php echo ucfirst($user['role']); ?></div>
@@ -312,9 +293,15 @@ if (isset($_GET['edit'])) {
             </div>
 
             <nav class="nav">
-                <a href="dashboard.php" class="nav-item"><span class="nav-icon">▦</span> Dashboard</a>
-                <a href="users.php" class="nav-item"><span class="nav-icon">👤</span> Users</a>
-                <a href="appointments.php" class="nav-item active"><span class="nav-icon">📅</span> Appointments</a>
+                <a href="dashboard.php" class="nav-item">
+                    <span class="nav-icon">▦</span> Dashboard
+                </a>
+                <a href="users.php" class="nav-item">
+                    <span class="nav-icon">👤</span> Users
+                </a>
+                <a href="appointments.php" class="nav-item active">
+                    <span class="nav-icon">📅</span> Appointments
+                </a>
                 <a href="schedules.php" class="nav-item">
                     <span class="nav-icon">🕒</span> Schedules
                 </a>
@@ -327,11 +314,15 @@ if (isset($_GET['edit'])) {
                 <a href="settings.php" class="nav-item">
                     <span class="nav-icon">⚙️</span> Settings
                 </a>
-
+                <a href="profile.php" class="nav-item">
+                    <span class="nav-icon">👤</span> Profile
+                </a>
             </nav>
 
             <div class="sidebar-footer">
-                <button type="button" class="logout-btn" onclick="openLogoutModal()"><span>↪</span> Log Out</button>
+                <button type="button" class="logout-btn" onclick="openLogoutModal()">
+                    <span>↪</span> Log Out
+                </button>
             </div>
         </aside>
 
@@ -346,7 +337,9 @@ if (isset($_GET['edit'])) {
             </header>
 
             <?php if ($success): ?>
-                <div class="alert alert-success" style="margin-bottom:20px;"><?php echo htmlspecialchars($success); ?></div>
+                <div class="alert alert-success" style="margin-bottom:20px;">
+                    <?php echo htmlspecialchars($success); ?>
+                </div>
             <?php endif; ?>
 
             <?php if (!empty($errors)): ?>
@@ -368,7 +361,7 @@ if (isset($_GET['edit'])) {
                 <a href="?filter=no-show" class="filter-tab <?php echo $currentFilter === 'no-show' ? 'active' : ''; ?>">No-Show</a>
             </div>
 
-            <!-- TABLE -->
+            <!-- APPOINTMENTS TABLE -->
             <div class="card table-card">
                 <table class="users-table appointments-table">
                     <thead>
@@ -393,7 +386,9 @@ if (isset($_GET['edit'])) {
                                 <tr>
                                     <td>
                                         <div class="user-cell">
-                                            <div class="table-avatar"><?php echo strtoupper(substr($appt['patient'], 0, 1)); ?></div>
+                                            <div class="table-avatar">
+                                                <?php echo strtoupper(substr($appt['patient'], 0, 1)); ?>
+                                            </div>
                                             <span><?php echo htmlspecialchars($appt['patient']); ?></span>
                                         </div>
                                     </td>
@@ -404,32 +399,37 @@ if (isset($_GET['edit'])) {
                                         <?php
                                         $status = strtolower($appt['status'] ?? '');
                                         $label = ucwords(str_replace('-', ' ', $status));
+                                        $badgeClass = 'status-' . $status;
                                         ?>
-                                        <span class="appt-status status-<?php echo $status; ?>">
+                                        <span class="appt-status <?php echo $badgeClass; ?>">
                                             <span class="status-dot"></span>
                                             <?php echo htmlspecialchars($label); ?>
                                         </span>
                                     </td>
                                     <td>
                                         <div class="action-buttons">
+                                            <!-- Edit -->
                                             <a href="?edit=<?php echo (int)$appt['id']; ?>&filter=<?php echo urlencode($currentFilter); ?>"
-                                                class="btn-action btn-edit-action">Edit</a>
+                                                class="btn-action btn-edit-action" title="Edit">
+                                                Edit
+                                            </a>
 
-                                            <?php if (!in_array($status, ['checked-in', 'completed', 'cancelled', 'no-show'])): ?>
+                                            <!-- Quick status actions -->
+                                            <?php if ($status !== 'checked-in' && $status !== 'completed' && $status !== 'cancelled' && $status !== 'no-show'): ?>
                                                 <form method="POST" style="display:inline;" onsubmit="return confirm('Check-in this patient?');">
                                                     <input type="hidden" name="action" value="update_status">
                                                     <input type="hidden" name="id" value="<?php echo (int)$appt['id']; ?>">
                                                     <input type="hidden" name="status" value="checked-in">
-                                                    <button type="submit" class="btn-action btn-checkin">Check-in</button>
+                                                    <button type="submit" class="btn-action btn-checkin" title="Check-in">Check-in</button>
                                                 </form>
                                             <?php endif; ?>
 
-                                            <?php if (!in_array($status, ['cancelled', 'completed', 'no-show'])): ?>
+                                            <?php if ($status !== 'cancelled' && $status !== 'completed' && $status !== 'no-show'): ?>
                                                 <form method="POST" style="display:inline;" onsubmit="return confirm('Cancel this appointment?');">
                                                     <input type="hidden" name="action" value="update_status">
                                                     <input type="hidden" name="id" value="<?php echo (int)$appt['id']; ?>">
                                                     <input type="hidden" name="status" value="cancelled">
-                                                    <button type="submit" class="btn-action btn-cancel">Cancel</button>
+                                                    <button type="submit" class="btn-action btn-cancel" title="Cancel">Cancel</button>
                                                 </form>
                                             <?php endif; ?>
 
@@ -438,14 +438,15 @@ if (isset($_GET['edit'])) {
                                                     <input type="hidden" name="action" value="update_status">
                                                     <input type="hidden" name="id" value="<?php echo (int)$appt['id']; ?>">
                                                     <input type="hidden" name="status" value="completed">
-                                                    <button type="submit" class="btn-action btn-complete">Complete</button>
+                                                    <button type="submit" class="btn-action btn-complete" title="Complete">Complete</button>
                                                 </form>
                                             <?php endif; ?>
 
+                                            <!-- Delete -->
                                             <form method="POST" style="display:inline;" onsubmit="return confirm('Permanently delete this appointment?');">
                                                 <input type="hidden" name="action" value="delete_appointment">
                                                 <input type="hidden" name="id" value="<?php echo (int)$appt['id']; ?>">
-                                                <button type="submit" class="btn-action btn-delete">Delete</button>
+                                                <button type="submit" class="btn-action btn-delete" title="Delete">Delete</button>
                                             </form>
                                         </div>
                                     </td>
@@ -458,13 +459,14 @@ if (isset($_GET['edit'])) {
         </main>
     </div>
 
-    <!-- ADD / EDIT MODAL -->
+    <!-- ========== ADD / EDIT APPOINTMENT MODAL ========== -->
     <div class="modal-overlay" id="appointmentModal">
         <div class="modal add-user-modal" style="max-width:520px;">
             <div class="modal-header">
                 <h3 id="modalTitle">Add New Appointment</h3>
                 <button class="modal-close" onclick="closeAppointmentModal()">×</button>
             </div>
+
             <form method="POST" id="appointmentForm">
                 <input type="hidden" name="action" id="formAction" value="add_appointment">
                 <input type="hidden" name="id" id="formId" value="">
@@ -551,17 +553,21 @@ if (isset($_GET['edit'])) {
     </div>
 
     <script>
+        // ========== MODAL CONTROL ==========
         function openAddModal() {
             document.getElementById('modalTitle').textContent = 'Add New Appointment';
             document.getElementById('formAction').value = 'add_appointment';
             document.getElementById('formId').value = '';
             document.getElementById('submitBtn').textContent = 'Add Appointment';
+
+            // Reset form
             document.getElementById('formPatient').value = '';
             document.getElementById('formDoctor').value = '';
             document.getElementById('formDate').value = '';
             document.getElementById('formTime').value = '';
             document.getElementById('formType').value = '';
             document.getElementById('formStatus').value = 'pending';
+
             document.getElementById('appointmentModal').classList.add('show');
         }
 
@@ -570,17 +576,20 @@ if (isset($_GET['edit'])) {
             document.getElementById('formAction').value = 'edit_appointment';
             document.getElementById('formId').value = data.id;
             document.getElementById('submitBtn').textContent = 'Save Changes';
+
             document.getElementById('formPatient').value = data.patient || '';
             document.getElementById('formDoctor').value = data.doctor || '';
             document.getElementById('formDate').value = data.date || '';
             document.getElementById('formTime').value = data.time || '';
             document.getElementById('formType').value = data.type || '';
             document.getElementById('formStatus').value = data.status || 'pending';
+
             document.getElementById('appointmentModal').classList.add('show');
         }
 
         function closeAppointmentModal() {
             document.getElementById('appointmentModal').classList.remove('show');
+            // Clean URL if we came from ?edit=
             if (window.location.search.includes('edit=')) {
                 const url = new URL(window.location);
                 url.searchParams.delete('edit');
@@ -596,12 +605,16 @@ if (isset($_GET['edit'])) {
             document.getElementById('logoutModal').classList.remove('show');
         }
 
+        // Close modals on overlay click
         document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
             overlay.addEventListener('click', function(e) {
-                if (e.target === this) this.classList.remove('show');
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
             });
         });
 
+        // Auto-open edit modal if PHP set edit data
         <?php if ($editData): ?>
             document.addEventListener('DOMContentLoaded', function() {
                 openEditModal(<?php echo json_encode([

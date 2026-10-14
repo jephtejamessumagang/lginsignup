@@ -8,6 +8,18 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
 }
 
 $user = $_SESSION['user'];
+
+// Load profile avatar for sidebar
+$sidebarAvatar = '';
+$profilesFileSidebar = __DIR__ . '/profiles.json';
+if (file_exists($profilesFileSidebar)) {
+    $allProfiles = json_decode(file_get_contents($profilesFileSidebar), true) ?? [];
+    $key = strtolower($user['email'] ?? $user['name'] ?? '');
+    if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
+        $sidebarAvatar = $allProfiles[$key]['avatar'];
+    }
+}
+
 $usersFile = __DIR__ . '/users.json';
 
 // ========== LOAD USERS ==========
@@ -170,7 +182,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             </div>
 
             <div class="user-card">
-                <div class="avatar"><?php echo strtoupper(substr($user['name'], 0, 1)); ?></div>
+                <div class="avatar" style="overflow:hidden;padding:0;">
+                    <?php if (!empty($sidebarAvatar)): ?>
+                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">
+                    <?php else: ?>
+                        <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
+                    <?php endif; ?>
+                </div>
                 <div>
                     <div class="user-name"><?php echo htmlspecialchars($user['name']); ?></div>
                     <div class="user-role"><?php echo ucfirst($user['role']); ?></div>
@@ -199,7 +217,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 <a href="settings.php" class="nav-item">
                     <span class="nav-icon">⚙️</span> Settings
                 </a>
-
+                <a href="profile.php" class="nav-item">
+                    <span class="nav-icon">👤</span> Profile
+                </a>
             </nav>
 
             <div class="sidebar-footer">
