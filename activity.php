@@ -8,6 +8,18 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
 }
 
 $user = $_SESSION['user'];
+
+// Load profile avatar for sidebar
+$sidebarAvatar = '';
+$profilesFileSidebar = __DIR__ . '/profiles.json';
+if (file_exists($profilesFileSidebar)) {
+    $allProfiles = json_decode(file_get_contents($profilesFileSidebar), true) ?? [];
+    $key = strtolower($user['email'] ?? $user['name'] ?? '');
+    if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
+        $sidebarAvatar = $allProfiles[$key]['avatar'];
+    }
+}
+
 $activityFile = __DIR__ . '/activity.json';
 
 // Load activity log
@@ -44,6 +56,7 @@ function getActivityIcon($type)
     <title>Activity Log - JJJ GentleCare</title>
     <link rel="stylesheet" href="dashboard.css">
     <style>
+        /* ========== ACTIVITY LOG STYLES ========== */
         .activity-list {
             background: white;
             border-radius: 18px;
@@ -141,6 +154,7 @@ function getActivityIcon($type)
 
 <body>
     <div class="layout">
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -155,27 +169,56 @@ function getActivityIcon($type)
                     </div>
                 </div>
             </div>
+
             <div class="user-card">
-                <div class="avatar"><?php echo strtoupper(substr($user['name'], 0, 1)); ?></div>
+                <div class="avatar" style="overflow:hidden;padding:0;">
+                    <?php if (!empty($sidebarAvatar)): ?>
+                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">
+                    <?php else: ?>
+                        <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
+                    <?php endif; ?>
+                </div>
                 <div>
                     <div class="user-name"><?php echo htmlspecialchars($user['name']); ?></div>
                     <div class="user-role"><?php echo ucfirst($user['role']); ?></div>
                 </div>
             </div>
+
             <nav class="nav">
-                <a href="dashboard.php" class="nav-item"><span class="nav-icon">▦</span> Dashboard</a>
-                <a href="users.php" class="nav-item"><span class="nav-icon">👤</span> Users</a>
-                <a href="appointments.php" class="nav-item"><span class="nav-icon">📅</span> Appointments</a>
-                <a href="schedules.php" class="nav-item"><span class="nav-icon">🕒</span> Schedules</a>
-                <a href="reports.php" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
-                <a href="activity.php" class="nav-item active"><span class="nav-icon">📋</span> Activity Log</a>
-                <a href="settings.php" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+                <a href="dashboard.php" class="nav-item">
+                    <span class="nav-icon">▦</span> Dashboard
+                </a>
+                <a href="users.php" class="nav-item">
+                    <span class="nav-icon">👤</span> Users
+                </a>
+                <a href="appointments.php" class="nav-item">
+                    <span class="nav-icon">📅</span> Appointments
+                </a>
+                <a href="schedules.php" class="nav-item">
+                    <span class="nav-icon">🕒</span> Schedules
+                </a>
+                <a href="reports.php" class="nav-item">
+                    <span class="nav-icon">📊</span> Reports
+                </a>
+                <a href="activity.php" class="nav-item active">
+                    <span class="nav-icon">📋</span> Activity Log
+                </a>
+                <a href="settings.php" class="nav-item">
+                    <span class="nav-icon">⚙️</span> Settings
+                </a>
+                <a href="profile.php" class="nav-item">
+                    <span class="nav-icon">👤</span> Profile
+                </a>
             </nav>
+
             <div class="sidebar-footer">
-                <button type="button" class="logout-btn" onclick="openLogoutModal()"><span>↪</span> Log Out</button>
+                <button type="button" class="logout-btn" onclick="openLogoutModal()">
+                    <span>↪</span> Log Out
+                </button>
             </div>
         </aside>
 
+        <!-- MAIN CONTENT -->
         <main class="main">
             <header class="topbar">
                 <div>
@@ -203,7 +246,9 @@ function getActivityIcon($type)
                                     <?php echo htmlspecialchars($item['action']); ?>
                                 </div>
                             </div>
-                            <div class="activity-time"><?php echo htmlspecialchars($item['time']); ?></div>
+                            <div class="activity-time">
+                                <?php echo htmlspecialchars($item['time']); ?>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -211,6 +256,7 @@ function getActivityIcon($type)
         </main>
     </div>
 
+    <!-- LOGOUT MODAL -->
     <div class="modal-overlay" id="logoutModal">
         <div class="modal">
             <div class="modal-icon">
