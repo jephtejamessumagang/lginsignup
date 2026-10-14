@@ -68,8 +68,8 @@ foreach ($registeredUsers as $u) {
     $normalizedUsers[] = [
         'name'   => $u['name'] ?? 'Unknown',
         'email'  => $u['email'] ?? '',
-        'role'   => $u['role'] ?? 'patient',      // default if missing
-        'status' => $u['status'] ?? 'active',     // default if missing
+        'role'   => $u['role'] ?? 'patient',
+        'status' => $u['status'] ?? 'active',
     ];
 }
 
@@ -261,7 +261,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <th>EMAIL</th>
                             <th>ROLE</th>
                             <th>STATUS</th>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -285,9 +284,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                     <span class="status-badge status-<?php echo htmlspecialchars($u['status']); ?>">
                                         <?php echo ucfirst($u['status']); ?>
                                     </span>
-                                </td>
-                                <td>
-                                    <button class="btn-edit">Edit</button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
