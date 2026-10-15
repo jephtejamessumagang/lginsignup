@@ -6,6 +6,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JJJ GentleCare - Create Account</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Role selector — signup only */
+        .role-group {
+            margin-bottom: 20px;
+        }
+
+        .role-group>label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: #475569;
+            margin-bottom: 10px;
+        }
+
+        .role-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .role-option {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .role-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .role-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1.5px solid #e2e8f0;
+            background: #f8fafc;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .role-option input:checked+.role-pill.role-patient {
+            background: #0d9488;
+            border-color: #0d9488;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
+        }
+
+        .role-option input:checked+.role-pill.role-doctor {
+            background: #059669;
+            border-color: #059669;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+        }
+
+        .role-option input:checked+.role-pill.role-staff {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+        }
+
+        .role-option:hover .role-pill {
+            border-color: #99f6e4;
+        }
+
+        .role-hint {
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+
+        .role-desc {
+            font-weight: 500;
+            color: #64748b;
+        }
+    </style>
 </head>
 
 <body>
@@ -59,6 +144,7 @@
                 $name = '';
                 $email = '';
                 $age = '';
+                $role = 'patient';
                 $password = '';
                 $confirm = '';
                 $success = false;
@@ -68,8 +154,14 @@
                     $name     = trim($_POST['name'] ?? '');
                     $email    = trim($_POST['email'] ?? '');
                     $age      = trim($_POST['age'] ?? '');
+                    $role     = strtolower(trim($_POST['role'] ?? 'patient'));
                     $password = trim($_POST['password'] ?? '');
                     $confirm  = trim($_POST['confirm'] ?? '');
+
+                    $allowedRoles = ['patient', 'doctor', 'staff'];
+                    if (!in_array($role, $allowedRoles, true)) {
+                        $role = 'patient';
+                    }
 
                     if ($name === '') {
                         $errors[] = "Name is required.";
@@ -146,6 +238,8 @@
                             'name'     => $name,
                             'email'    => $email,
                             'age'      => (int)$age,
+                            'role'     => $role,
+                            'status'   => 'active',
                             'password' => password_hash($password, PASSWORD_DEFAULT),
                             'created'  => date('Y-m-d H:i:s'),
                         ];
@@ -185,6 +279,28 @@
                         <div class="form-group">
                             <label for="age">AGE</label>
                             <input type="text" id="age" name="age" placeholder="25" value="<?php echo htmlspecialchars($age); ?>">
+                        </div>
+
+                        <!-- ACCOUNT ROLE -->
+                        <div class="role-group">
+                            <label>ACCOUNT ROLE</label>
+                            <div class="role-options">
+                                <label class="role-option">
+                                    <input type="radio" name="role" value="patient" <?php echo $role === 'patient' ? 'checked' : ''; ?>>
+                                    <span class="role-pill role-patient">PATIENT</span>
+                                </label>
+                                <label class="role-option">
+                                    <input type="radio" name="role" value="doctor" <?php echo $role === 'doctor' ? 'checked' : ''; ?>>
+                                    <span class="role-pill role-doctor">DOCTOR</span>
+                                </label>
+                                <label class="role-option">
+                                    <input type="radio" name="role" value="staff" <?php echo $role === 'staff' ? 'checked' : ''; ?>>
+                                    <span class="role-pill role-staff">STAFF</span>
+                                </label>
+                            </div>
+                            <p class="role-hint">
+                                <span class="role-desc" id="roleDesc">Public patient portal access</span>
+                            </p>
                         </div>
 
                         <div class="form-group">
@@ -237,6 +353,26 @@
             }
         }
 
+        // Role description
+        (function() {
+            var desc = document.getElementById('roleDesc');
+            if (!desc) return;
+            var texts = {
+                patient: 'Public patient portal access',
+                doctor: 'Physician portal access',
+                staff: 'Clinic staff / reception access'
+            };
+            document.querySelectorAll('input[name="role"]').forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    desc.textContent = texts[this.value] || '';
+                });
+                if (radio.checked) {
+                    desc.textContent = texts[radio.value] || '';
+                }
+            });
+        })();
+
+        // 7-character password limit
         (function() {
             var passwordInput = document.getElementById('password');
             var confirmInput = document.getElementById('confirm');

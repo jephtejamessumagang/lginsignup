@@ -152,7 +152,10 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                                     foreach ($users as $user) {
                                         if (strtolower($user['email']) === $emailLower) {
                                             $fullName = $user['name'];
-                                            $role = 'patient';
+                                            $role = $user['role'] ?? 'patient';
+                                            if (!in_array($role, ['admin', 'doctor', 'staff', 'patient'], true)) {
+                                                $role = 'patient';
+                                            }
                                             break;
                                         }
                                     }
