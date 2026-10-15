@@ -44,7 +44,7 @@
             </div>
 
             <div class="hero-image">
-                <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80" alt="Medical professional working">
+                <img src="photo.jpg" alt="Medical professional working">
             </div>
         </div>
 
