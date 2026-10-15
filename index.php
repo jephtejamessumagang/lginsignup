@@ -165,7 +165,6 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                                 'role'  => $role
                             ];
 
-                            // Redirect by role
                             if ($role === 'admin') {
                                 header('Location: dashboard.php');
                             } elseif ($role === 'doctor') {
@@ -206,7 +205,8 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                             <a href="forgot-password.php" class="forgot-link">Forgot password?</a>
                         </div>
                         <div class="password-wrapper">
-                            <input type="password" id="password" name="password" placeholder="••••••••"
+                            <input type="password" id="password" name="password" placeholder="•••••••"
+                                maxlength="7" minlength="7"
                                 autocomplete="current-password">
                             <button type="button" class="toggle-password" onclick="togglePassword()" aria-label="Toggle password visibility">
                                 <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
@@ -278,6 +278,37 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
             document.getElementById('email').value = email;
             document.getElementById('password').value = 'demo123';
         }
+
+        // Limit password to exactly 7 characters (same as signup)
+        (function() {
+            var passwordInput = document.getElementById('password');
+            if (!passwordInput) return;
+
+            function enforceMax7(input) {
+                if (input.value.length > 7) {
+                    input.value = input.value.slice(0, 7);
+                }
+            }
+
+            function blockOver7(e, input) {
+                var allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
+                if (input.value.length >= 7 && !allowed.includes(e.key) && !e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                }
+            }
+
+            passwordInput.addEventListener('input', function() {
+                enforceMax7(passwordInput);
+            });
+            passwordInput.addEventListener('keydown', function(e) {
+                blockOver7(e, passwordInput);
+            });
+            passwordInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var text = (e.clipboardData || window.clipboardData).getData('text') || '';
+                passwordInput.value = text.slice(0, 7);
+            });
+        })();
     </script>
 </body>
 
