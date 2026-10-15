@@ -6,75 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JJJ GentleCare - Create Account</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Signup password strength only — does not affect login */
-        .password-strength {
-            margin-top: 10px;
-        }
-
-        .strength-bars {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 6px;
-        }
-
-        .strength-bar {
-            flex: 1;
-            height: 5px;
-            border-radius: 999px;
-            background: #e2e8f0;
-            transition: background 0.2s ease;
-        }
-
-        .strength-bar.active-weak {
-            background: #ef4444;
-        }
-
-        .strength-bar.active-mid {
-            background: #f97316;
-        }
-
-        .strength-bar.active-strong {
-            background: #22c55e;
-        }
-
-        .strength-label {
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: #94a3b8;
-            min-height: 1.1em;
-        }
-
-        .strength-label.weak {
-            color: #ef4444;
-        }
-
-        .strength-label.mid {
-            color: #f97316;
-        }
-
-        .strength-label.strong {
-            color: #22c55e;
-        }
-
-        .char-count {
-            font-size: 0.75rem;
-            color: #94a3b8;
-            text-align: right;
-            margin-top: 4px;
-        }
-
-        .char-count.full {
-            color: #0d9488;
-            font-weight: 600;
-        }
-
-        .password-hint {
-            font-size: 0.75rem;
-            color: #64748b;
-            margin-top: 4px;
-        }
-    </style>
 </head>
 
 <body>
@@ -113,7 +44,7 @@
             </div>
 
             <div class="hero-image">
-                <img src="photo.jpg" alt="Medical professional working">
+                <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80" alt="Medical professional working">
             </div>
         </div>
 
@@ -160,7 +91,6 @@
                         $errors[] = "Name must be 2-50 letters (spaces, dots, apostrophes allowed).";
                     }
 
-                    // Exactly 7 characters only
                     if ($password !== '' && strlen($password) !== 7) {
                         $errors[] = "Password must be exactly 7 characters.";
                     }
@@ -268,16 +198,6 @@
                                     </svg>
                                 </button>
                             </div>
-                            <div class="char-count" id="charCount">0 / 7</div>
-                            <div class="password-strength">
-                                <div class="strength-bars">
-                                    <div class="strength-bar" id="bar1"></div>
-                                    <div class="strength-bar" id="bar2"></div>
-                                    <div class="strength-bar" id="bar3"></div>
-                                </div>
-                                <div class="strength-label" id="strengthLabel">Enter password</div>
-                            </div>
-                            <p class="password-hint">Password must be exactly 7 characters. 7 characters = Strong.</p>
                         </div>
 
                         <div class="form-group">
@@ -322,48 +242,9 @@
             var confirmInput = document.getElementById('confirm');
             if (!passwordInput) return;
 
-            var bar1 = document.getElementById('bar1');
-            var bar2 = document.getElementById('bar2');
-            var bar3 = document.getElementById('bar3');
-            var strengthLabel = document.getElementById('strengthLabel');
-            var charCount = document.getElementById('charCount');
-
             function enforceMax7(input) {
                 if (input.value.length > 7) {
                     input.value = input.value.slice(0, 7);
-                }
-            }
-
-            function updateStrength() {
-                enforceMax7(passwordInput);
-                var len = passwordInput.value.length;
-                charCount.textContent = len + ' / 7';
-                charCount.classList.toggle('full', len === 7);
-
-                [bar1, bar2, bar3].forEach(function(b) {
-                    b.className = 'strength-bar';
-                });
-                strengthLabel.className = 'strength-label';
-                strengthLabel.textContent = 'Enter password';
-
-                if (len === 0) return;
-
-                // 1–2 Weak (red) | 3–5 Medium (orange) | 6–7 Strong (green)
-                if (len <= 2) {
-                    bar1.classList.add('active-weak');
-                    strengthLabel.textContent = 'Weak';
-                    strengthLabel.classList.add('weak');
-                } else if (len <= 5) {
-                    bar1.classList.add('active-mid');
-                    bar2.classList.add('active-mid');
-                    strengthLabel.textContent = 'Medium';
-                    strengthLabel.classList.add('mid');
-                } else {
-                    bar1.classList.add('active-strong');
-                    bar2.classList.add('active-strong');
-                    bar3.classList.add('active-strong');
-                    strengthLabel.textContent = len === 7 ? 'Strong' : 'Almost strong';
-                    strengthLabel.classList.add('strong');
                 }
             }
 
@@ -374,7 +255,9 @@
                 }
             }
 
-            passwordInput.addEventListener('input', updateStrength);
+            passwordInput.addEventListener('input', function() {
+                enforceMax7(passwordInput);
+            });
             passwordInput.addEventListener('keydown', function(e) {
                 blockOver7(e, passwordInput);
             });
@@ -382,7 +265,6 @@
                 e.preventDefault();
                 var text = (e.clipboardData || window.clipboardData).getData('text') || '';
                 passwordInput.value = text.slice(0, 7);
-                updateStrength();
             });
 
             if (confirmInput) {
@@ -398,8 +280,6 @@
                     confirmInput.value = text.slice(0, 7);
                 });
             }
-
-            updateStrength();
         })();
     </script>
 </body>
