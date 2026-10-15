@@ -1,132 +1,97 @@
 <?php
 session_start();
 
+// Protect page - only logged-in admin can access
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     header('Location: index.php');
     exit;
 }
 
 $user = $_SESSION['user'];
-$profilesFile = __DIR__ . '/profiles.json';
-$uploadDir = __DIR__ . '/uploads';
 
-if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0755, true);
+// Load profile avatar + sync name for sidebar
+$sidebarAvatar = '';
+$profilesFileSidebar = __DIR__ . '/profiles.json';
+if (file_exists($profilesFileSidebar)) {
+    $allProfiles = json_decode(file_get_contents($profilesFileSidebar), true) ?? [];
+    $key = strtolower($user['email'] ?? $user['name'] ?? '');
+    if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
+        $sidebarAvatar = $allProfiles[$key]['avatar'];
+    }
+    // Show updated full name from Profile on every page
+    if (!empty($allProfiles[$key]['full_name'])) {
+        $_SESSION['user']['name'] = $allProfiles[$key]['full_name'];
+        $user['name'] = $allProfiles[$key]['full_name'];
+    }
 }
 
-$profiles = [];
-if (file_exists($profilesFile)) {
-    $profiles = json_decode(file_get_contents($profilesFile), true) ?? [];
-}
+$settingsFile = __DIR__ . '/settings.json';
 
-$emailKey = strtolower($user['email'] ?? $user['name']);
-
-$profile = [
-    'full_name'  => $user['name'] ?? 'Jephte Sumagang',
-    'email'      => $user['email'] ?? 'admin@gentlecare.com',
-    'phone'      => '+63 912 345 6789',
-    'position'   => 'System Administrator',
-    'avatar'     => ''
+// Load current settings
+$settings = [
+    'clinic_name' => 'JJJ GentleCare',
+    'address'     => '123 Medical Drive, Health City',
+    'phone'       => '+63 912 345 6789',
+    'email'       => 'info@jjgentlecare.com',
+    'hours'       => [
+        'monday_friday' => '8:00 AM – 5:00 PM',
+        'saturday'      => '8:00 AM – 12:00 PM',
+        'sunday'        => 'Closed'
+    ]
 ];
 
-if (isset($profiles[$emailKey])) {
-    $profile = array_merge($profile, $profiles[$emailKey]);
-}
-
-// Sidebar avatar
-$sidebarAvatar = '';
-if (!empty($profile['avatar']) && file_exists(__DIR__ . '/' . $profile['avatar'])) {
-    $sidebarAvatar = $profile['avatar'];
+if (file_exists($settingsFile)) {
+    $loaded = json_decode(file_get_contents($settingsFile), true);
+    if ($loaded) {
+        $settings = array_merge($settings, $loaded);
+    }
 }
 
 $errors = [];
 $success = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_profile') {
-    $fullName  = trim($_POST['full_name'] ?? '');
-    $email     = trim($_POST['email'] ?? '');
-    $phone     = trim($_POST['phone'] ?? '');
-    $position  = trim($_POST['position'] ?? '');
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_settings') {
+    $clinicName = trim($_POST['clinic_name'] ?? '');
+    $address    = trim($_POST['address'] ?? '');
+    $phone      = trim($_POST['phone'] ?? '');
+    $email      = trim($_POST['email'] ?? '');
 
-    if ($fullName === '') {
-        $errors[] = "Full name is required.";
-    } elseif (strlen($fullName) < 2 || strlen($fullName) > 60) {
-        $errors[] = "Full name must be between 2 and 60 characters.";
+    // Validations
+    if ($clinicName === '') {
+        $errors[] = "Clinic name is required.";
+    } elseif (strlen($clinicName) < 2 || strlen($clinicName) > 80) {
+        $errors[] = "Clinic name must be between 2 and 80 characters.";
     }
 
-    if ($email === '') {
-        $errors[] = "Email is required.";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Please enter a valid email address.";
+    if ($address === '') {
+        $errors[] = "Address is required.";
+    } elseif (strlen($address) < 5 || strlen($address) > 150) {
+        $errors[] = "Address must be between 5 and 150 characters.";
     }
 
     if ($phone === '') {
-        $errors[] = "Phone is required.";
+        $errors[] = "Phone number is required.";
     } elseif (!preg_match('/^[\d\s\+\-\(\)]{7,20}$/', $phone)) {
         $errors[] = "Please enter a valid phone number.";
     }
 
-    if ($position === '') {
-        $errors[] = "Position is required.";
-    }
-
-    $avatarPath = $profile['avatar'] ?? '';
-    if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
-        $file = $_FILES['avatar'];
-        $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
-
-        if (!in_array($mime, $allowed)) {
-            $errors[] = "Profile picture must be JPG, PNG, GIF, or WebP.";
-        } elseif ($file['size'] > 2 * 1024 * 1024) {
-            $errors[] = "Profile picture must be under 2MB.";
-        } else {
-            $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-            $newName = 'avatar_' . preg_replace('/[^a-z0-9]/i', '_', $emailKey) . '_' . time() . '.' . strtolower($ext);
-            $dest = $uploadDir . '/' . $newName;
-            if (move_uploaded_file($file['tmp_name'], $dest)) {
-                if (!empty($avatarPath) && strpos($avatarPath, 'uploads/') === 0) {
-                    $old = __DIR__ . '/' . $avatarPath;
-                    if (file_exists($old)) @unlink($old);
-                }
-                $avatarPath = 'uploads/' . $newName;
-            } else {
-                $errors[] = "Failed to upload profile picture.";
-            }
-        }
+    if ($email === '') {
+        $errors[] = "Email address is required.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Please enter a valid email address.";
     }
 
     if (empty($errors)) {
-        $profile = [
-            'full_name'  => $fullName,
-            'email'      => $email,
-            'phone'      => $phone,
-            'position'   => $position,
-            'avatar'     => $avatarPath
-        ];
-        $profiles[$emailKey] = $profile;
-        file_put_contents($profilesFile, json_encode($profiles, JSON_PRETTY_PRINT));
+        $settings['clinic_name'] = $clinicName;
+        $settings['address']     = $address;
+        $settings['phone']       = $phone;
+        $settings['email']       = $email;
 
-        $_SESSION['user']['name'] = $fullName;
-        if (!empty($email)) {
-            $_SESSION['user']['email'] = $email;
-        }
-
-        $success = "Profile saved successfully!";
-        $user = $_SESSION['user'];
-        if (!empty($avatarPath) && file_exists(__DIR__ . '/' . $avatarPath)) {
-            $sidebarAvatar = $avatarPath;
-        }
+        file_put_contents($settingsFile, json_encode($settings, JSON_PRETTY_PRINT));
+        $success = "Clinic information saved successfully!";
     }
 }
-
-$avatarUrl = '';
-if (!empty($profile['avatar']) && file_exists(__DIR__ . '/' . $profile['avatar'])) {
-    $avatarUrl = $profile['avatar'];
-}
-$initial = strtoupper(substr($profile['full_name'], 0, 1));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -134,105 +99,42 @@ $initial = strtoupper(substr($profile['full_name'], 0, 1));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile - JJJ GentleCare</title>
+    <title>Settings - JJJ GentleCare</title>
     <link rel="stylesheet" href="dashboard.css">
     <style>
-        .profile-wrap {
-            max-width: 440px;
-            margin: 0 auto;
-        }
-
-        .profile-card {
+        /* ========== SETTINGS PAGE STYLES ========== */
+        .settings-card {
             background: white;
             border-radius: 18px;
-            padding: 32px 28px;
+            padding: 28px;
             border: 1px solid #e2e8f0;
             box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
-            text-align: center;
+            margin: 0 auto 24px auto;
+            max-width: 560px;
         }
 
-        .avatar-wrap {
-            position: relative;
-            width: 88px;
-            height: 88px;
-            margin: 0 auto 14px auto;
-        }
-
-        .avatar-circle {
-            width: 88px;
-            height: 88px;
-            border-radius: 50%;
-            background: #ccfbf1;
-            color: #0f766e;
-            display: grid;
-            place-items: center;
-            font-size: 2rem;
-            font-weight: 700;
-            overflow: hidden;
-            border: 3px solid #e2e8f0;
-        }
-
-        .avatar-circle img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .avatar-edit {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 30px;
-            height: 30px;
-            background: #0d9488;
-            border: 2px solid white;
-            border-radius: 50%;
-            display: grid;
-            place-items: center;
-            cursor: pointer;
-            color: white;
-            font-size: 0.85rem;
-            transition: background 0.15s;
-        }
-
-        .avatar-edit:hover {
-            background: #0f766e;
-        }
-
-        #avatarInput {
-            display: none;
-        }
-
-        .profile-name {
-            font-size: 1.2rem;
+        .settings-card h3 {
+            font-size: 1.1rem;
             font-weight: 700;
             color: #1e293b;
-            margin-bottom: 2px;
+            margin-bottom: 22px;
         }
 
-        .profile-role {
-            font-size: 0.88rem;
-            color: #0d9488;
-            font-weight: 600;
-            margin-bottom: 24px;
+        .settings-card .form-group {
+            margin-bottom: 18px;
         }
 
-        .form-group {
-            text-align: left;
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
+        .settings-card .form-group label {
             display: block;
-            font-size: 0.7rem;
+            font-size: 0.72rem;
             font-weight: 700;
             letter-spacing: 0.05em;
-            color: #64748b;
-            margin-bottom: 6px;
+            color: #475569;
+            margin-bottom: 7px;
             text-transform: uppercase;
         }
 
-        .form-group input {
+        .settings-card .form-group input {
             width: 100%;
             padding: 12px 14px;
             border: 1.5px solid #e2e8f0;
@@ -240,53 +142,66 @@ $initial = strtoupper(substr($profile['full_name'], 0, 1));
             font-size: 0.95rem;
             color: #1e293b;
             background: white;
-            font-family: inherit;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .form-group input:focus {
+        .settings-card .form-group input:focus {
             outline: none;
             border-color: #0d9488;
             box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
         }
 
         .btn-save {
-            width: 100%;
-            background: #0d9488;
+            background: linear-gradient(135deg, #0d9488, #0f766e);
             color: white;
             border: none;
-            padding: 13px;
+            padding: 12px 24px;
             border-radius: 12px;
-            font-size: 0.98rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s;
             font-family: inherit;
-            margin-top: 8px;
-            transition: background 0.15s, transform 0.15s;
         }
 
         .btn-save:hover {
-            background: #0f766e;
             transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3);
         }
 
-        .avatar {
-            overflow: hidden;
-            padding: 0;
+        /* Clinic Hours */
+        .hours-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
         }
 
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            display: block;
+        .hours-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+
+        .hours-day {
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .hours-time {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .hours-time.closed {
+            color: #94a3b8;
         }
     </style>
 </head>
 
 <body>
     <div class="layout">
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -303,16 +218,16 @@ $initial = strtoupper(substr($profile['full_name'], 0, 1));
             </div>
 
             <div class="user-card">
-                <div class="avatar">
+                <div class="avatar" style="overflow:hidden;padding:0;">
                     <?php if (!empty($sidebarAvatar)): ?>
-                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="">
+                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">
                     <?php else: ?>
                         <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
                     <?php endif; ?>
                 </div>
                 <div>
                     <div class="user-name"><?php echo htmlspecialchars($user['name']); ?></div>
-                    <div class="user-role">Admin</div>
+                    <div class="user-role"><?php echo ucfirst($user['role']); ?></div>
                 </div>
             </div>
 
@@ -335,10 +250,10 @@ $initial = strtoupper(substr($profile['full_name'], 0, 1));
                 <a href="activity.php" class="nav-item">
                     <span class="nav-icon">📋</span> Activity Log
                 </a>
-                <a href="settings.php" class="nav-item">
+                <a href="settings.php" class="nav-item active">
                     <span class="nav-icon">⚙️</span> Settings
                 </a>
-                <a href="profile.php" class="nav-item active">
+                <a href="profile.php" class="nav-item">
                     <span class="nav-icon">👤</span> Profile
                 </a>
             </nav>
@@ -350,78 +265,89 @@ $initial = strtoupper(substr($profile['full_name'], 0, 1));
             </div>
         </aside>
 
+        <!-- MAIN CONTENT -->
         <main class="main">
-            <header class="topbar" style="text-align:center;">
+            <header class="topbar">
                 <div>
-                    <h1>My Profile</h1>
+                    <h1>Settings</h1>
+                    <p class="date">System configuration</p>
                 </div>
             </header>
 
-            <div class="profile-wrap">
-                <?php if ($success): ?>
-                    <div class="alert alert-success" style="margin-bottom:16px; text-align:center;">
-                        <?php echo htmlspecialchars($success); ?>
+            <?php if ($success): ?>
+                <div class="alert alert-success" style="margin:0 auto 20px auto; max-width:560px;">
+                    <?php echo htmlspecialchars($success); ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($errors)): ?>
+                <div class="alert alert-error" style="margin:0 auto 20px auto; max-width:560px;">
+                    <?php foreach ($errors as $error): ?>
+                        <div><?php echo htmlspecialchars($error); ?></div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- Clinic Information -->
+            <div class="settings-card">
+                <h3>Clinic Information</h3>
+                <form method="POST">
+                    <input type="hidden" name="action" value="save_settings">
+
+                    <div class="form-group">
+                        <label>CLINIC NAME</label>
+                        <input type="text" name="clinic_name"
+                            value="<?php echo htmlspecialchars($settings['clinic_name']); ?>"
+                            placeholder="JJJ GentleCare" required>
                     </div>
-                <?php endif; ?>
 
-                <?php if (!empty($errors)): ?>
-                    <div class="alert alert-error" style="margin-bottom:16px;">
-                        <?php foreach ($errors as $e): ?>
-                            <div><?php echo htmlspecialchars($e); ?></div>
-                        <?php endforeach; ?>
+                    <div class="form-group">
+                        <label>ADDRESS</label>
+                        <input type="text" name="address"
+                            value="<?php echo htmlspecialchars($settings['address']); ?>"
+                            placeholder="123 Medical Drive, Health City" required>
                     </div>
-                <?php endif; ?>
 
-                <div class="profile-card">
-                    <form method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="action" value="save_profile">
+                    <div class="form-group">
+                        <label>PHONE</label>
+                        <input type="text" name="phone"
+                            value="<?php echo htmlspecialchars($settings['phone']); ?>"
+                            placeholder="+63 912 345 6789" required>
+                    </div>
 
-                        <div class="avatar-wrap">
-                            <div class="avatar-circle" id="avatarPreview">
-                                <?php if ($avatarUrl): ?>
-                                    <img src="<?php echo htmlspecialchars($avatarUrl); ?>" alt="Profile">
-                                <?php else: ?>
-                                    <?php echo $initial; ?>
-                                <?php endif; ?>
-                            </div>
-                            <label class="avatar-edit" for="avatarInput" title="Change photo">📷</label>
-                            <input type="file" name="avatar" id="avatarInput" accept="image/jpeg,image/png,image/gif,image/webp">
-                        </div>
+                    <div class="form-group">
+                        <label>EMAIL</label>
+                        <input type="email" name="email"
+                            value="<?php echo htmlspecialchars($settings['email']); ?>"
+                            placeholder="info@jjgentlecare.com" required>
+                    </div>
 
-                        <div class="profile-name"><?php echo htmlspecialchars($profile['full_name']); ?></div>
-                        <div class="profile-role">Admin</div>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </form>
+            </div>
 
-                        <div class="form-group">
-                            <label>FULL NAME</label>
-                            <input type="text" name="full_name"
-                                value="<?php echo htmlspecialchars($profile['full_name']); ?>" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label>EMAIL</label>
-                            <input type="email" name="email"
-                                value="<?php echo htmlspecialchars($profile['email']); ?>" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label>PHONE</label>
-                            <input type="text" name="phone"
-                                value="<?php echo htmlspecialchars($profile['phone']); ?>" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label>POSITION</label>
-                            <input type="text" name="position"
-                                value="<?php echo htmlspecialchars($profile['position'] ?? 'System Administrator'); ?>" required>
-                        </div>
-
-                        <button type="submit" class="btn-save">Save Changes</button>
-                    </form>
+            <!-- Clinic Hours -->
+            <div class="settings-card">
+                <h3>Clinic Hours</h3>
+                <div class="hours-list">
+                    <div class="hours-row">
+                        <span class="hours-day">Monday–Friday</span>
+                        <span class="hours-time"><?php echo htmlspecialchars($settings['hours']['monday_friday']); ?></span>
+                    </div>
+                    <div class="hours-row">
+                        <span class="hours-day">Saturday</span>
+                        <span class="hours-time"><?php echo htmlspecialchars($settings['hours']['saturday']); ?></span>
+                    </div>
+                    <div class="hours-row">
+                        <span class="hours-day">Sunday</span>
+                        <span class="hours-time closed"><?php echo htmlspecialchars($settings['hours']['sunday']); ?></span>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- LOGOUT MODAL -->
     <div class="modal-overlay" id="logoutModal">
         <div class="modal">
             <div class="modal-icon">
@@ -450,17 +376,6 @@ $initial = strtoupper(substr($profile['full_name'], 0, 1));
         }
         document.getElementById('logoutModal').addEventListener('click', function(e) {
             if (e.target === this) closeLogoutModal();
-        });
-
-        document.getElementById('avatarInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                document.getElementById('avatarPreview').innerHTML =
-                    '<img src="' + ev.target.result + '" alt="Profile">';
-            };
-            reader.readAsDataURL(file);
         });
     </script>
 </body>

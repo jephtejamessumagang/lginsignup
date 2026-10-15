@@ -9,7 +9,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
 
 $user = $_SESSION['user'];
 
-// Load profile avatar for sidebar
+// Load profile avatar + sync name for sidebar
 $sidebarAvatar = '';
 $profilesFileSidebar = __DIR__ . '/profiles.json';
 if (file_exists($profilesFileSidebar)) {
@@ -17,6 +17,11 @@ if (file_exists($profilesFileSidebar)) {
     $key = strtolower($user['email'] ?? $user['name'] ?? '');
     if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
         $sidebarAvatar = $allProfiles[$key]['avatar'];
+    }
+    // Show updated full name from Profile on every page
+    if (!empty($allProfiles[$key]['full_name'])) {
+        $_SESSION['user']['name'] = $allProfiles[$key]['full_name'];
+        $user['name'] = $allProfiles[$key]['full_name'];
     }
 }
 
