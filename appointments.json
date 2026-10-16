@@ -29,7 +29,7 @@
         "doctor": "Dr. Vistal",
         "datetime": "2026-09-17 01:00 PM",
         "type": "Check-up",
-        "status": "confirmed"
+        "status": "completed"
     },
     {
         "id": 5,

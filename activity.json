@@ -1,47 +1,56 @@
 [
-  {
-    "id": 1,
-    "actor": "Jack Inihao",
-    "action": "Confirmed appointment for Maria Santos",
-    "type": "success",
-    "time": "9:42 AM",
-    "timestamp": 1792187583,
-    "date": "2026-10-16 21:53:03"
-  },
-  {
-    "id": 2,
-    "actor": "Dr. Vistal",
-    "action": "Marked Roberto Cruz as No-show",
-    "type": "danger",
-    "time": "9:15 AM",
-    "timestamp": 1792186683,
-    "date": "2026-10-16 21:38:03"
-  },
-  {
-    "id": 3,
-    "actor": "Jack Inihao",
-    "action": "Booked new appointment for Ana Reyes",
-    "type": "info",
-    "time": "8:55 AM",
-    "timestamp": 1792185783,
-    "date": "2026-10-16 21:23:03"
-  },
-  {
-    "id": 4,
-    "actor": "Dr. Vistal",
-    "action": "Completed session with Carlos Mendoza",
-    "type": "primary",
-    "time": "8:30 AM",
-    "timestamp": 1792184883,
-    "date": "2026-10-16 21:08:03"
-  },
-  {
-    "id": 5,
-    "actor": "Jephte Sumagang",
-    "action": "Cancelled appointment #apt9",
-    "type": "warning",
-    "time": "Yesterday",
-    "timestamp": 1792183983,
-    "date": "2026-10-16 20:53:03"
-  }
+    {
+        "id": 6,
+        "actor": "Dr. James Carl Vistal",
+        "action": "Completed session for appointment #4",
+        "type": "primary",
+        "time": "1:17 AM",
+        "timestamp": 1792192674,
+        "date": "2026-10-17 01:17:54"
+    },
+    {
+        "id": 1,
+        "actor": "Jack Inihao",
+        "action": "Confirmed appointment for Maria Santos",
+        "type": "success",
+        "time": "9:42 AM",
+        "timestamp": 1792187583,
+        "date": "2026-10-16 21:53:03"
+    },
+    {
+        "id": 2,
+        "actor": "Dr. Vistal",
+        "action": "Marked Roberto Cruz as No-show",
+        "type": "danger",
+        "time": "9:15 AM",
+        "timestamp": 1792186683,
+        "date": "2026-10-16 21:38:03"
+    },
+    {
+        "id": 3,
+        "actor": "Jack Inihao",
+        "action": "Booked new appointment for Ana Reyes",
+        "type": "info",
+        "time": "8:55 AM",
+        "timestamp": 1792185783,
+        "date": "2026-10-16 21:23:03"
+    },
+    {
+        "id": 4,
+        "actor": "Dr. Vistal",
+        "action": "Completed session with Carlos Mendoza",
+        "type": "primary",
+        "time": "8:30 AM",
+        "timestamp": 1792184883,
+        "date": "2026-10-16 21:08:03"
+    },
+    {
+        "id": 5,
+        "actor": "Jephte Sumagang",
+        "action": "Cancelled appointment #apt9",
+        "type": "warning",
+        "time": "Yesterday",
+        "timestamp": 1792183983,
+        "date": "2026-10-16 20:53:03"
+    }
 ]
