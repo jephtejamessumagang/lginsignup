@@ -28,5 +28,14 @@
         "status": "active",
         "password": "$2y$10$Q3avtuJesQ\/5vGC0HFtvKuR5FWpdgfzvi3.AYmFYoJ\/USjmYWhUNe",
         "created": "2026-10-16 06:13:30"
+    },
+    {
+        "name": "CK Perino",
+        "email": "clark@email.com",
+        "age": 21,
+        "role": "staff",
+        "status": "active",
+        "password": "$2y$10$zU.jN6U9DSQDIe8jw9DezOalwjY8QVKpTHnL88bDgdCoPOGEzupV.",
+        "created": "2026-10-16 06:18:19"
     }
 ]
