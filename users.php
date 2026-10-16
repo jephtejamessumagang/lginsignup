@@ -41,6 +41,67 @@ function saveUsersFile($usersFile, $users)
     file_put_contents($usersFile, json_encode(array_values($users), JSON_PRETTY_PRINT));
 }
 
+
+/**
+ * Resolve avatar + display name from profiles.json.
+ * Demo rows use clinic emails; login profiles use *@gentlecare.com.
+ */
+function resolveProfileMeta(array $allProfiles, string $email, string $fallbackName): array
+{
+    $email = strtolower(trim($email));
+    $aliases = [
+        'jvistal@jjgentlecare.com' => ['doctor@gentlecare.com', 'jvistal@jjgentlecare.com'],
+        'doctor@gentlecare.com'    => ['doctor@gentlecare.com', 'jvistal@jjgentlecare.com'],
+        'jinihao@jjgentlecare.com' => ['staff@gentlecare.com', 'jinihao@jjgentlecare.com'],
+        'staff@gentlecare.com'     => ['staff@gentlecare.com', 'jinihao@jjgentlecare.com'],
+        'jephte.patient@gmail.com' => ['patient@gentlecare.com', 'jephte.patient@gmail.com'],
+        'patient@gentlecare.com'   => ['patient@gentlecare.com', 'jephte.patient@gmail.com'],
+        'admin@gentlecare.com'     => ['admin@gentlecare.com', 'admin@jjgentlecare.com'],
+    ];
+    $keys = $aliases[$email] ?? [$email];
+    // Also try the raw email and any profile whose email field matches
+    $keys[] = $email;
+
+    $avatar = '';
+    $name = $fallbackName;
+    foreach ($keys as $k) {
+        $k = strtolower(trim($k));
+        if (!isset($allProfiles[$k]) || !is_array($allProfiles[$k])) {
+            continue;
+        }
+        $prof = $allProfiles[$k];
+        if (!empty($prof['full_name'])) {
+            $name = $prof['full_name'];
+        }
+        if (!empty($prof['avatar'])) {
+            $path = __DIR__ . '/' . $prof['avatar'];
+            if (file_exists($path)) {
+                $avatar = $prof['avatar'];
+                break;
+            }
+        }
+    }
+    // Last pass: scan all profiles for matching email field
+    if ($avatar === '') {
+        foreach ($allProfiles as $prof) {
+            if (!is_array($prof)) continue;
+            $pe = strtolower(trim($prof['email'] ?? ''));
+            if ($pe && in_array($pe, $keys, true) && !empty($prof['avatar'])) {
+                $path = __DIR__ . '/' . $prof['avatar'];
+                if (file_exists($path)) {
+                    $avatar = $prof['avatar'];
+                    if (!empty($prof['full_name'])) {
+                        $name = $prof['full_name'];
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    return ['avatar' => $avatar, 'name' => $name];
+}
+
+
 $registeredUsers = loadUsersFile($usersFile);
 
 // Demo users (shown if not also in users.json)
@@ -230,17 +291,13 @@ foreach (array_reverse($registeredUsers) as $ru) {
         continue; // shown via demo merge below
     }
     $emailKey = strtolower($ru['email'] ?? '');
-    $avatar = '';
-    if (isset($allProfiles[$emailKey]['avatar']) && $allProfiles[$emailKey]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$emailKey]['avatar'])) {
-        $avatar = $allProfiles[$emailKey]['avatar'];
-    }
-    $displayName = $allProfiles[$emailKey]['full_name'] ?? ($ru['name'] ?? 'Unknown');
+    $meta = resolveProfileMeta($allProfiles, $emailKey, $ru['name'] ?? 'Unknown');
     $allUsers[] = [
-        'name'   => $displayName,
+        'name'   => $meta['name'],
         'email'  => $ru['email'] ?? '',
         'role'   => $ru['role'] ?? 'patient',
         'status' => $ru['status'] ?? 'pending',
-        'avatar' => $avatar,
+        'avatar' => $meta['avatar'],
         'source' => 'registered',
     ];
 }
@@ -251,18 +308,13 @@ foreach ($demoUsers as $du) {
     if (isset($regByEmail[$emailKey])) {
         $status = $regByEmail[$emailKey]['status'] ?? $status;
     }
-    $avatar = '';
-    if (isset($allProfiles[$emailKey]['avatar']) && $allProfiles[$emailKey]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$emailKey]['avatar'])) {
-        $avatar = $allProfiles[$emailKey]['avatar'];
-    }
-    // Also try demo login emails for profiles
-    $displayName = $allProfiles[$emailKey]['full_name'] ?? $du['name'];
+    $meta = resolveProfileMeta($allProfiles, $emailKey, $du['name']);
     $allUsers[] = [
-        'name'   => $displayName,
+        'name'   => $meta['name'],
         'email'  => $du['email'],
         'role'   => $du['role'],
         'status' => $status,
-        'avatar' => $avatar,
+        'avatar' => $meta['avatar'],
         'source' => 'demo',
     ];
 }
