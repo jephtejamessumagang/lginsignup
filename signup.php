@@ -148,6 +148,7 @@
                 $password = '';
                 $confirm = '';
                 $success = false;
+                require_once __DIR__ . '/log_activity.php';
                 $usersFile = __DIR__ . '/users.json';
 
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -246,6 +247,7 @@
 
                         file_put_contents($usersFile, json_encode($users, JSON_PRETTY_PRINT));
                         $success = true;
+                        log_activity($name, 'Created a new ' . $role . ' account', 'info');
                     }
                 }
                 ?>
@@ -273,151 +275,13 @@
 
                         <div class="form-group">
                             <label for="email">EMAIL ADDRESS</label>
-                            <input type="email" id="email" name="email" placeholder="you@example.com" value="<?php echo htmlspecialchars($email); ?>">
+                            <input type="email" id="email" name="email" placeholder="james@example.com" value="<?php echo htmlspecialchars($email); ?>">
                         </div>
-
-                        <div class="form-group">
-                            <label for="age">AGE</label>
-                            <input type="text" id="age" name="age" placeholder="25" value="<?php echo htmlspecialchars($age); ?>">
-                        </div>
-
-                        <!-- ACCOUNT ROLE -->
-                        <div class="role-group">
-                            <label>ACCOUNT ROLE</label>
-                            <div class="role-options">
-                                <label class="role-option">
-                                    <input type="radio" name="role" value="patient" <?php echo $role === 'patient' ? 'checked' : ''; ?>>
-                                    <span class="role-pill role-patient">PATIENT</span>
-                                </label>
-                                <label class="role-option">
-                                    <input type="radio" name="role" value="doctor" <?php echo $role === 'doctor' ? 'checked' : ''; ?>>
-                                    <span class="role-pill role-doctor">DOCTOR</span>
-                                </label>
-                                <label class="role-option">
-                                    <input type="radio" name="role" value="staff" <?php echo $role === 'staff' ? 'checked' : ''; ?>>
-                                    <span class="role-pill role-staff">STAFF</span>
-                                </label>
-                            </div>
-                            <p class="role-hint">
-                                <span class="role-desc" id="roleDesc">Public patient portal access</span>
-                            </p>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="password">PASSWORD (exactly 7 characters)</label>
-                            <div class="password-wrapper">
-                                <input type="password" id="password" name="password" placeholder="•••••••" maxlength="7" minlength="7" autocomplete="new-password">
-                                <button type="button" class="toggle-password" onclick="togglePass('password','eye1')" aria-label="Toggle password">
-                                    <svg id="eye1" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="confirm">CONFIRM PASSWORD</label>
-                            <div class="password-wrapper">
-                                <input type="password" id="confirm" name="confirm" placeholder="•••••••" maxlength="7" minlength="7" autocomplete="new-password">
-                                <button type="button" class="toggle-password" onclick="togglePass('confirm','eye2')" aria-label="Toggle password">
-                                    <svg id="eye2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn-signin">Create Account</button>
                     </form>
                 <?php endif; ?>
-
-                <p class="signup-text">
-                    Already have an account? <a href="index.php">Sign in</a>
-                </p>
             </div>
         </div>
     </div>
-
-    <script>
-        function togglePass(inputId, iconId) {
-            const input = document.getElementById(inputId);
-            const icon = document.getElementById(iconId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
-            } else {
-                input.type = 'password';
-                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
-            }
-        }
-
-        // Role description
-        (function() {
-            var desc = document.getElementById('roleDesc');
-            if (!desc) return;
-            var texts = {
-                patient: 'Public patient portal access',
-                doctor: 'Physician portal access',
-                staff: 'Clinic staff / reception access'
-            };
-            document.querySelectorAll('input[name="role"]').forEach(function(radio) {
-                radio.addEventListener('change', function() {
-                    desc.textContent = texts[this.value] || '';
-                });
-                if (radio.checked) {
-                    desc.textContent = texts[radio.value] || '';
-                }
-            });
-        })();
-
-        // 7-character password limit
-        (function() {
-            var passwordInput = document.getElementById('password');
-            var confirmInput = document.getElementById('confirm');
-            if (!passwordInput) return;
-
-            function enforceMax7(input) {
-                if (input.value.length > 7) {
-                    input.value = input.value.slice(0, 7);
-                }
-            }
-
-            function blockOver7(e, input) {
-                var allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
-                if (input.value.length >= 7 && !allowed.includes(e.key) && !e.ctrlKey && !e.metaKey) {
-                    e.preventDefault();
-                }
-            }
-
-            passwordInput.addEventListener('input', function() {
-                enforceMax7(passwordInput);
-            });
-            passwordInput.addEventListener('keydown', function(e) {
-                blockOver7(e, passwordInput);
-            });
-            passwordInput.addEventListener('paste', function(e) {
-                e.preventDefault();
-                var text = (e.clipboardData || window.clipboardData).getData('text') || '';
-                passwordInput.value = text.slice(0, 7);
-            });
-
-            if (confirmInput) {
-                confirmInput.addEventListener('input', function() {
-                    enforceMax7(confirmInput);
-                });
-                confirmInput.addEventListener('keydown', function(e) {
-                    blockOver7(e, confirmInput);
-                });
-                confirmInput.addEventListener('paste', function(e) {
-                    e.preventDefault();
-                    var text = (e.clipboardData || window.clipboardData).getData('text') || '';
-                    confirmInput.value = text.slice(0, 7);
-                });
-            }
-        })();
-    </script>
 </body>
 
 </html>

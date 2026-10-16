@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/log_activity.php';
 
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     header('Location: index.php');
@@ -112,6 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 
     if (empty($errors)) {
+        // If email changed, move profile key
         $newKey = strtolower($email);
         if ($newKey !== $emailKey && isset($profiles[$emailKey])) {
             unset($profiles[$emailKey]);
@@ -136,6 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $sidebarAvatar = $avatarPath;
         }
 
+        log_activity($fullName, 'Updated admin profile', 'primary');
         $success = 'Profile saved successfully!';
     }
 }
@@ -331,14 +334,30 @@ $initial = strtoupper(substr($profile['full_name'] ?: 'A', 0, 1));
             </div>
 
             <nav class="nav">
-                <a href="dashboard.php" class="nav-item"><span class="nav-icon">▦</span> Dashboard</a>
-                <a href="users.php" class="nav-item"><span class="nav-icon">👤</span> Users</a>
-                <a href="appointments.php" class="nav-item"><span class="nav-icon">📅</span> Appointments</a>
-                <a href="schedules.php" class="nav-item"><span class="nav-icon">🕒</span> Schedules</a>
-                <a href="reports.php" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
-                <a href="activity.php" class="nav-item"><span class="nav-icon">📋</span> Activity Log</a>
-                <a href="settings.php" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
-                <a href="profile.php" class="nav-item active"><span class="nav-icon">👤</span> Profile</a>
+                <a href="dashboard.php" class="nav-item">
+                    <span class="nav-icon">▦</span> Dashboard
+                </a>
+                <a href="users.php" class="nav-item">
+                    <span class="nav-icon">👤</span> Users
+                </a>
+                <a href="appointments.php" class="nav-item">
+                    <span class="nav-icon">📅</span> Appointments
+                </a>
+                <a href="schedules.php" class="nav-item">
+                    <span class="nav-icon">🕒</span> Schedules
+                </a>
+                <a href="reports.php" class="nav-item">
+                    <span class="nav-icon">📊</span> Reports
+                </a>
+                <a href="activity.php" class="nav-item">
+                    <span class="nav-icon">📋</span> Activity Log
+                </a>
+                <a href="settings.php" class="nav-item">
+                    <span class="nav-icon">⚙️</span> Settings
+                </a>
+                <a href="profile.php" class="nav-item active">
+                    <span class="nav-icon">👤</span> Profile
+                </a>
             </nav>
 
             <div class="sidebar-footer">

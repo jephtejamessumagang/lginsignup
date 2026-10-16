@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/log_activity.php';
 
 // Protect page - only logged-in admin can access
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
@@ -110,6 +111,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             ];
 
             saveAppointments($appointmentsFile, $appointments);
+            $actorName = $_SESSION['user']['name'] ?? 'Admin';
+            log_activity($actorName, 'Booked new appointment for ' . $patient, 'info');
             $success = "Appointment added successfully!";
         }
     }
@@ -172,6 +175,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             unset($a);
 
             saveAppointments($appointmentsFile, $appointments);
+            $actorName = $_SESSION['user']['name'] ?? 'Admin';
+            log_activity($actorName, 'Edited appointment #' . $id . ' for ' . $patient, 'primary');
             $success = "Appointment updated successfully!";
         }
     }
@@ -197,7 +202,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
             if ($found) {
                 saveAppointments($appointmentsFile, $appointments);
-                $success = "Status updated to " . ucwords(str_replace('-', ' ', $status)) . "!";
+                $actorName = $_SESSION['user']['name'] ?? 'Admin';
+                $statusLabel = ucwords(str_replace('-', ' ', $status));
+                $logType = in_array($status, ['cancelled', 'no-show'], true) ? 'danger' : ($status === 'completed' ? 'primary' : 'success');
+                log_activity($actorName, $statusLabel . ' appointment #' . $id, $logType);
+                $success = "Status updated to " . $statusLabel . "!";
             } else {
                 $errors[] = "Appointment not found.";
             }
@@ -211,6 +220,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             return (int)$a['id'] !== $id;
         });
         saveAppointments($appointmentsFile, $appointments);
+        $actorName = $_SESSION['user']['name'] ?? 'Admin';
+        log_activity($actorName, 'Deleted appointment #' . $id, 'warning');
         $success = "Appointment deleted successfully!";
     }
 }

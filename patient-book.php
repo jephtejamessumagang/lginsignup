@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/log_activity.php';
 
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'patient') {
     header('Location: index.php');
@@ -110,6 +111,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'notes'    => $notes
             ];
             file_put_contents($appointmentsFile, json_encode(array_values($appointments), JSON_PRETTY_PRINT));
+            $actorName = $_SESSION['user']['name'] ?? 'Patient';
+            log_activity($actorName, 'Requested appointment with ' . $doctor, 'info');
             unset($_SESSION['book_type']);
             $success = "Appointment request submitted successfully!";
             $step = 2;

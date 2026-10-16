@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/log_activity.php';
 
 // Protect page - only staff can access
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'staff') {
@@ -131,6 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         $appointments[] = $newAppt;
         file_put_contents($appointmentsFile, json_encode(array_values($appointments), JSON_PRETTY_PRINT));
+        $actorName = $_SESSION['user']['name'] ?? 'Staff';
+        log_activity($actorName, 'Booked new appointment for ' . $patient, 'info');
 
         $success = "Appointment booked successfully for {$patient}!";
         // Clear form

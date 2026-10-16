@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Protect page - only logged-in admin can access
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     header('Location: index.php');
     exit;
@@ -9,7 +8,6 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
 
 $user = $_SESSION['user'];
 
-// Load profile avatar + sync name for sidebar
 $sidebarAvatar = '';
 $profilesFileSidebar = __DIR__ . '/profiles.json';
 if (file_exists($profilesFileSidebar)) {
@@ -18,22 +16,20 @@ if (file_exists($profilesFileSidebar)) {
     if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
         $sidebarAvatar = $allProfiles[$key]['avatar'];
     }
-    // Show updated full name from Profile on every page
     if (!empty($allProfiles[$key]['full_name'])) {
         $_SESSION['user']['name'] = $allProfiles[$key]['full_name'];
         $user['name'] = $allProfiles[$key]['full_name'];
     }
 }
 
-$activityFile = __DIR__ . '/activity.json';
+require_once __DIR__ . '/log_activity.php';
 
-// Load activity log
+$activityFile = __DIR__ . '/activity.json';
 $activities = [];
 if (file_exists($activityFile)) {
     $activities = json_decode(file_get_contents($activityFile), true) ?? [];
 }
 
-// Icon mapping based on type
 function getActivityIcon($type)
 {
     switch ($type) {
@@ -61,7 +57,6 @@ function getActivityIcon($type)
     <title>Activity Log - JJJ GentleCare</title>
     <link rel="stylesheet" href="dashboard.css">
     <style>
-        /* ========== ACTIVITY LOG STYLES ========== */
         .activity-list {
             background: white;
             border-radius: 18px;
@@ -159,7 +154,6 @@ function getActivityIcon($type)
 
 <body>
     <div class="layout">
-        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -176,9 +170,9 @@ function getActivityIcon($type)
             </div>
 
             <div class="user-card">
-                <div class="avatar" style="overflow:hidden;padding:0;">
+                <div class="avatar">
                     <?php if (!empty($sidebarAvatar)): ?>
-                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">
+                        <img src="<?php echo htmlspecialchars($sidebarAvatar); ?>" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
                     <?php else: ?>
                         <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
                     <?php endif; ?>
@@ -190,30 +184,14 @@ function getActivityIcon($type)
             </div>
 
             <nav class="nav">
-                <a href="dashboard.php" class="nav-item">
-                    <span class="nav-icon">▦</span> Dashboard
-                </a>
-                <a href="users.php" class="nav-item">
-                    <span class="nav-icon">👤</span> Users
-                </a>
-                <a href="appointments.php" class="nav-item">
-                    <span class="nav-icon">📅</span> Appointments
-                </a>
-                <a href="schedules.php" class="nav-item">
-                    <span class="nav-icon">🕒</span> Schedules
-                </a>
-                <a href="reports.php" class="nav-item">
-                    <span class="nav-icon">📊</span> Reports
-                </a>
-                <a href="activity.php" class="nav-item active">
-                    <span class="nav-icon">📋</span> Activity Log
-                </a>
-                <a href="settings.php" class="nav-item">
-                    <span class="nav-icon">⚙️</span> Settings
-                </a>
-                <a href="profile.php" class="nav-item">
-                    <span class="nav-icon">👤</span> Profile
-                </a>
+                <a href="dashboard.php" class="nav-item"><span class="nav-icon">▦</span> Dashboard</a>
+                <a href="users.php" class="nav-item"><span class="nav-icon">👤</span> Users</a>
+                <a href="appointments.php" class="nav-item"><span class="nav-icon">📅</span> Appointments</a>
+                <a href="schedules.php" class="nav-item"><span class="nav-icon">🕒</span> Schedules</a>
+                <a href="reports.php" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
+                <a href="activity.php" class="nav-item active"><span class="nav-icon">📋</span> Activity Log</a>
+                <a href="settings.php" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+                <a href="profile.php" class="nav-item"><span class="nav-icon">👤</span> Profile</a>
             </nav>
 
             <div class="sidebar-footer">
@@ -223,7 +201,6 @@ function getActivityIcon($type)
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="main">
             <header class="topbar">
                 <div>
@@ -235,24 +212,24 @@ function getActivityIcon($type)
             <div class="activity-list">
                 <?php if (empty($activities)): ?>
                     <div class="activity-item">
-                        <div class="activity-content" style="text-align:center; color:#94a3b8; width:100%;">
+                        <div class="activity-content" style="text-align:center;color:#94a3b8;width:100%;">
                             No activity recorded yet.
                         </div>
                     </div>
                 <?php else: ?>
                     <?php foreach ($activities as $item): ?>
                         <div class="activity-item">
-                            <div class="activity-icon <?php echo htmlspecialchars($item['type']); ?>">
-                                <?php echo getActivityIcon($item['type']); ?>
+                            <div class="activity-icon <?php echo htmlspecialchars($item['type'] ?? 'info'); ?>">
+                                <?php echo getActivityIcon($item['type'] ?? 'info'); ?>
                             </div>
                             <div class="activity-content">
                                 <div class="activity-text">
-                                    <strong><?php echo htmlspecialchars($item['actor']); ?></strong>
-                                    <?php echo htmlspecialchars($item['action']); ?>
+                                    <strong><?php echo htmlspecialchars($item['actor'] ?? ''); ?></strong>
+                                    <?php echo htmlspecialchars($item['action'] ?? ''); ?>
                                 </div>
                             </div>
                             <div class="activity-time">
-                                <?php echo htmlspecialchars($item['time']); ?>
+                                <?php echo htmlspecialchars(format_activity_time($item)); ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -261,7 +238,6 @@ function getActivityIcon($type)
         </main>
     </div>
 
-    <!-- LOGOUT MODAL -->
     <div class="modal-overlay" id="logoutModal">
         <div class="modal">
             <div class="modal-icon">

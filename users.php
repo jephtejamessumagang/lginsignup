@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/log_activity.php';
 
 // Protect page - only admin can access
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
@@ -142,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         ];
 
         file_put_contents($usersFile, json_encode($registeredUsers, JSON_PRETTY_PRINT));
+        log_activity($user['name'] ?? 'Admin', 'Added new user: ' . $name . ' (' . $role . ')', 'info');
         $success = "User added successfully!";
 
         // Refresh list

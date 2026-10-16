@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/log_activity.php';
 
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'doctor') {
     header('Location: index.php');
@@ -131,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         if (!empty($avatarPath) && file_exists(__DIR__ . '/' . $avatarPath)) {
             $sidebarAvatar = $avatarPath;
         }
+        log_activity($fullName, 'Updated doctor profile', 'primary');
         $success = 'Profile saved successfully!';
     }
 }

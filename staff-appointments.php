@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/log_activity.php';
 
 // Protect page - only staff can access
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'staff') {
@@ -48,6 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
         unset($a);
         file_put_contents($appointmentsFile, json_encode(array_values($appointments), JSON_PRETTY_PRINT));
+        $actorName = $_SESSION['user']['name'] ?? 'Staff';
+        $statusLabel = ucfirst(str_replace('-', ' ', $status));
+        $logType = in_array($status, ['cancelled', 'no-show'], true) ? 'danger' : ($status === 'completed' ? 'primary' : 'success');
+        log_activity($actorName, $statusLabel . ' appointment #' . $id, $logType);
     }
     header('Location: staff-appointments.php');
     exit;
