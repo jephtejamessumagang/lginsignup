@@ -122,8 +122,21 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                             $users = json_decode(file_get_contents($usersFile), true) ?? [];
                             foreach ($users as $user) {
                                 if (strtolower($user['email']) === strtolower($email)) {
-                                    if (password_verify($password, $user['password']) || $user['password'] === $password) {
-                                        $valid_login = true;
+                                    $pwdOk = false;
+                                    if (!empty($user['password']) && (password_verify($password, $user['password']) || $user['password'] === $password)) {
+                                        $pwdOk = true;
+                                    }
+                                    if ($pwdOk) {
+                                        $st = strtolower($user['status'] ?? 'active');
+                                        if ($st === 'pending') {
+                                            $errors[] = 'Your account is pending admin approval.';
+                                        } elseif ($st === 'banned') {
+                                            $errors[] = 'Your account has been banned. Contact the administrator.';
+                                        } elseif ($st === 'inactive') {
+                                            $errors[] = 'Your account is inactive. Contact the administrator.';
+                                        } else {
+                                            $valid_login = true;
+                                        }
                                     }
                                     break;
                                 }

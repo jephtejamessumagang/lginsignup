@@ -2,7 +2,6 @@
 session_start();
 require_once __DIR__ . '/log_activity.php';
 
-// Protect page - only admin can access
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     header('Location: index.php');
     exit;
@@ -10,16 +9,16 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
 
 $user = $_SESSION['user'];
 
-// Load profile avatar + sync name for sidebar
+// Sidebar avatar + name sync
 $sidebarAvatar = '';
-$profilesFileSidebar = __DIR__ . '/profiles.json';
-if (file_exists($profilesFileSidebar)) {
-    $allProfiles = json_decode(file_get_contents($profilesFileSidebar), true) ?? [];
+$profilesFile = __DIR__ . '/profiles.json';
+$allProfiles = [];
+if (file_exists($profilesFile)) {
+    $allProfiles = json_decode(file_get_contents($profilesFile), true) ?? [];
     $key = strtolower($user['email'] ?? $user['name'] ?? '');
     if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
         $sidebarAvatar = $allProfiles[$key]['avatar'];
     }
-    // Show updated full name from Profile on every page
     if (!empty($allProfiles[$key]['full_name'])) {
         $_SESSION['user']['name'] = $allProfiles[$key]['full_name'];
         $user['name'] = $allProfiles[$key]['full_name'];
@@ -28,136 +27,244 @@ if (file_exists($profilesFileSidebar)) {
 
 $usersFile = __DIR__ . '/users.json';
 
-// ========== LOAD USERS ==========
-$registeredUsers = [];
-if (file_exists($usersFile)) {
-    $registeredUsers = json_decode(file_get_contents($usersFile), true) ?? [];
+function loadUsersFile($usersFile)
+{
+    if (!file_exists($usersFile)) {
+        return [];
+    }
+    $data = json_decode(file_get_contents($usersFile), true);
+    return is_array($data) ? $data : [];
 }
 
-// Demo users (always shown)
+function saveUsersFile($usersFile, $users)
+{
+    file_put_contents($usersFile, json_encode(array_values($users), JSON_PRETTY_PRINT));
+}
+
+$registeredUsers = loadUsersFile($usersFile);
+
+// Demo users (shown if not also in users.json)
 $demoUsers = [
     [
         'name'   => 'James Carl Vistal',
         'email'  => 'jvistal@jjgentlecare.com',
         'role'   => 'doctor',
-        'status' => 'active'
+        'status' => 'active',
+        'source' => 'demo',
     ],
     [
         'name'   => 'Jack Norris Inihao',
         'email'  => 'jinihao@jjgentlecare.com',
         'role'   => 'staff',
-        'status' => 'active'
+        'status' => 'active',
+        'source' => 'demo',
     ],
     [
         'name'   => 'Jephte James Sumagang',
         'email'  => 'jephte.patient@gmail.com',
         'role'   => 'patient',
-        'status' => 'active'
+        'status' => 'active',
+        'source' => 'demo',
     ],
     [
         'name'   => 'Maria Santos',
         'email'  => 'msantos@gmail.com',
         'role'   => 'patient',
-        'status' => 'active'
+        'status' => 'active',
+        'source' => 'demo',
     ],
     [
         'name'   => 'Roberto Cruz',
         'email'  => 'rcruz@gmail.com',
         'role'   => 'patient',
-        'status' => 'inactive'
+        'status' => 'inactive',
+        'source' => 'demo',
     ],
 ];
 
-// Normalize registered users (add missing role & status)
-$normalizedUsers = [];
-foreach ($registeredUsers as $u) {
-    $normalizedUsers[] = [
-        'name'   => $u['name'] ?? 'Unknown',
-        'email'  => $u['email'] ?? '',
-        'role'   => $u['role'] ?? 'patient',      // default if missing
-        'status' => $u['status'] ?? 'active',     // default if missing
-    ];
-}
-
-// Final list
-$allUsers = array_merge($demoUsers, $normalizedUsers);
-
-// ========== ADD USER LOGIC ==========
 $errors = [];
 $success = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_user') {
-    $name     = trim($_POST['name'] ?? '');
-    $email    = trim($_POST['email'] ?? '');
-    $role     = $_POST['role'] ?? '';
-    $status   = $_POST['status'] ?? 'active';
-    $password = trim($_POST['password'] ?? '');
+// ========== POST ACTIONS ==========
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $action = $_POST['action'];
 
-    // Validations
-    if ($name === '') {
-        $errors[] = "Full name is required.";
-    } elseif (!preg_match("/^[A-Za-z .'-]{2,50}$/", $name)) {
-        $errors[] = "Name must be 2-50 letters (spaces, dots, apostrophes allowed).";
-    }
+    // ----- ADD USER (admin-created = auto approved, role patient) -----
+    if ($action === 'add_user') {
+        $name     = trim($_POST['name'] ?? '');
+        $email    = trim($_POST['email'] ?? '');
+        $password = trim($_POST['password'] ?? '');
 
-    if ($email === '') {
-        $errors[] = "Email address is required.";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Valid email address is required.";
-    }
+        if ($name === '') {
+            $errors[] = 'Full name is required.';
+        } elseif (!preg_match("/^[A-Za-z .'-]{2,50}$/", $name)) {
+            $errors[] = "Name must be 2-50 letters (spaces, dots, apostrophes allowed).";
+        }
 
-    if ($password === '') {
-        $errors[] = "Password is required.";
-    } elseif (strlen($password) !== 7) {
-        $errors[] = "Password must be exactly 7 characters.";
-    }
+        if ($email === '') {
+            $errors[] = 'Email address is required.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Valid email address is required.';
+        }
 
-    if (!in_array($role, ['admin', 'doctor', 'staff', 'patient'])) {
-        $errors[] = "Please select a valid role.";
-    }
+        if ($password === '') {
+            $errors[] = 'Password is required.';
+        } elseif (strlen($password) !== 7) {
+            $errors[] = 'Password must be exactly 7 characters.';
+        }
 
-    if (!in_array($status, ['active', 'inactive'])) {
-        $errors[] = "Please select a valid status.";
-    }
-
-    // Check duplicate email
-    if (empty($errors)) {
         $emailLower = strtolower($email);
-        foreach ($allUsers as $existing) {
-            if (strtolower($existing['email']) === $emailLower) {
-                $errors[] = "This email is already registered.";
-                break;
+        $demoEmails = array_map(function ($d) {
+            return strtolower($d['email']);
+        }, $demoUsers);
+        $demoEmails = array_merge($demoEmails, [
+            'admin@gentlecare.com',
+            'doctor@gentlecare.com',
+            'staff@gentlecare.com',
+            'patient@gentlecare.com',
+        ]);
+
+        if (empty($errors)) {
+            if (in_array($emailLower, $demoEmails, true)) {
+                $errors[] = 'This email is already registered.';
+            }
+            foreach ($registeredUsers as $existing) {
+                if (strtolower($existing['email'] ?? '') === $emailLower) {
+                    $errors[] = 'This email is already registered.';
+                    break;
+                }
+            }
+        }
+
+        if (empty($errors)) {
+            $registeredUsers[] = [
+                'name'     => $name,
+                'email'    => $email,
+                'role'     => 'patient',
+                'status'   => 'active',
+                'password' => password_hash($password, PASSWORD_DEFAULT),
+                'created'  => date('Y-m-d H:i:s'),
+            ];
+            saveUsersFile($usersFile, $registeredUsers);
+            log_activity($user['name'] ?? 'Admin', 'Added new user: ' . $name . ' (patient)', 'info');
+            $success = 'User added successfully!';
+            $registeredUsers = loadUsersFile($usersFile);
+        }
+    }
+
+    // ----- APPROVE / BAN / UNBAN -----
+    if (in_array($action, ['approve_user', 'ban_user', 'unban_user'], true)) {
+        $targetEmail = strtolower(trim($_POST['email'] ?? ''));
+        if ($targetEmail === '') {
+            $errors[] = 'User email is missing.';
+        } else {
+            $found = false;
+            foreach ($registeredUsers as &$ru) {
+                if (strtolower($ru['email'] ?? '') === $targetEmail) {
+                    $found = true;
+                    if ($action === 'approve_user') {
+                        $ru['status'] = 'active';
+                        log_activity($user['name'] ?? 'Admin', 'Approved account: ' . ($ru['name'] ?? $targetEmail), 'success');
+                        $success = 'User approved successfully.';
+                    } elseif ($action === 'ban_user') {
+                        $ru['status'] = 'banned';
+                        log_activity($user['name'] ?? 'Admin', 'Banned account: ' . ($ru['name'] ?? $targetEmail), 'danger');
+                        $success = 'User banned successfully.';
+                    } else {
+                        $ru['status'] = 'active';
+                        log_activity($user['name'] ?? 'Admin', 'Unbanned account: ' . ($ru['name'] ?? $targetEmail), 'success');
+                        $success = 'User unbanned successfully.';
+                    }
+                    break;
+                }
+            }
+            unset($ru);
+
+            // Demo user ban/approve → store override in users.json
+            if (!$found) {
+                foreach ($demoUsers as $du) {
+                    if (strtolower($du['email']) === $targetEmail) {
+                        $found = true;
+                        $newStatus = $action === 'ban_user' ? 'banned' : 'active';
+                        $registeredUsers[] = [
+                            'name'     => $du['name'],
+                            'email'    => $du['email'],
+                            'role'     => $du['role'],
+                            'status'   => $newStatus,
+                            'password' => '',
+                            'created'  => date('Y-m-d H:i:s'),
+                            'is_demo_override' => true,
+                        ];
+                        if ($action === 'ban_user') {
+                            log_activity($user['name'] ?? 'Admin', 'Banned account: ' . $du['name'], 'danger');
+                            $success = 'User banned successfully.';
+                        } else {
+                            log_activity($user['name'] ?? 'Admin', 'Approved account: ' . $du['name'], 'success');
+                            $success = 'User updated successfully.';
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if ($found) {
+                saveUsersFile($usersFile, $registeredUsers);
+                $registeredUsers = loadUsersFile($usersFile);
+            } else {
+                $errors[] = 'User not found.';
             }
         }
     }
+}
 
-    // Save new user
-    if (empty($errors)) {
-        $registeredUsers[] = [
-            'name'     => $name,
-            'email'    => $email,
-            'role'     => $role,
-            'status'   => $status,
-            'password' => password_hash($password, PASSWORD_DEFAULT),
-            'created'  => date('Y-m-d H:i:s')
-        ];
+// Build display list: registered first (newest first), then demos not overridden
+$regByEmail = [];
+foreach ($registeredUsers as $ru) {
+    $regByEmail[strtolower($ru['email'] ?? '')] = $ru;
+}
 
-        file_put_contents($usersFile, json_encode($registeredUsers, JSON_PRETTY_PRINT));
-        log_activity($user['name'] ?? 'Admin', 'Added new user: ' . $name . ' (' . $role . ')', 'info');
-        $success = "User added successfully!";
-
-        // Refresh list
-        $normalizedUsers = [];
-        foreach ($registeredUsers as $u) {
-            $normalizedUsers[] = [
-                'name'   => $u['name'],
-                'email'  => $u['email'],
-                'role'   => $u['role'] ?? 'patient',
-                'status' => $u['status'] ?? 'active',
-            ];
-        }
-        $allUsers = array_merge($demoUsers, $normalizedUsers);
+$allUsers = [];
+// Registered users (reverse so newest appear first)
+foreach (array_reverse($registeredUsers) as $ru) {
+    if (!empty($ru['is_demo_override'])) {
+        continue; // shown via demo merge below
     }
+    $emailKey = strtolower($ru['email'] ?? '');
+    $avatar = '';
+    if (isset($allProfiles[$emailKey]['avatar']) && $allProfiles[$emailKey]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$emailKey]['avatar'])) {
+        $avatar = $allProfiles[$emailKey]['avatar'];
+    }
+    $displayName = $allProfiles[$emailKey]['full_name'] ?? ($ru['name'] ?? 'Unknown');
+    $allUsers[] = [
+        'name'   => $displayName,
+        'email'  => $ru['email'] ?? '',
+        'role'   => $ru['role'] ?? 'patient',
+        'status' => $ru['status'] ?? 'pending',
+        'avatar' => $avatar,
+        'source' => 'registered',
+    ];
+}
+
+foreach ($demoUsers as $du) {
+    $emailKey = strtolower($du['email']);
+    $status = $du['status'];
+    if (isset($regByEmail[$emailKey])) {
+        $status = $regByEmail[$emailKey]['status'] ?? $status;
+    }
+    $avatar = '';
+    if (isset($allProfiles[$emailKey]['avatar']) && $allProfiles[$emailKey]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$emailKey]['avatar'])) {
+        $avatar = $allProfiles[$emailKey]['avatar'];
+    }
+    // Also try demo login emails for profiles
+    $displayName = $allProfiles[$emailKey]['full_name'] ?? $du['name'];
+    $allUsers[] = [
+        'name'   => $displayName,
+        'email'  => $du['email'],
+        'role'   => $du['role'],
+        'status' => $status,
+        'avatar' => $avatar,
+        'source' => 'demo',
+    ];
 }
 ?>
 <!DOCTYPE html>
@@ -168,11 +275,109 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Management - JJJ GentleCare</title>
     <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .table-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #ccfbf1;
+            color: #0f766e;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .table-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge.status-pending {
+            background: #fff7ed;
+            color: #c2410c;
+            border: 1px solid #fed7aa;
+        }
+
+        .status-badge.status-banned {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .status-badge.status-inactive {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .status-badge.status-active {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1.5px solid transparent;
+            cursor: pointer;
+            font-family: inherit;
+            background: #f8fafc;
+            color: #64748b;
+            border-color: #e2e8f0;
+        }
+
+        .btn-sm:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-approve {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #a7f3d0;
+        }
+
+        .btn-ban {
+            background: #fef2f2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+
+        .btn-unban {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+
+        .users-table th:last-child,
+        .users-table td:last-child {
+            text-align: right;
+        }
+    </style>
 </head>
 
 <body>
     <div class="layout">
-        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -203,30 +408,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             </div>
 
             <nav class="nav">
-                <a href="dashboard.php" class="nav-item">
-                    <span class="nav-icon">▦</span> Dashboard
-                </a>
-                <a href="users.php" class="nav-item active">
-                    <span class="nav-icon">👤</span> Users
-                </a>
-                <a href="appointments.php" class="nav-item">
-                    <span class="nav-icon">📅</span> Appointments
-                </a>
-                <a href="schedules.php" class="nav-item">
-                    <span class="nav-icon">🕒</span> Schedules
-                </a>
-                <a href="reports.php" class="nav-item">
-                    <span class="nav-icon">📊</span> Reports
-                </a>
-                <a href="activity.php" class="nav-item">
-                    <span class="nav-icon">📋</span> Activity Log
-                </a>
-                <a href="settings.php" class="nav-item">
-                    <span class="nav-icon">⚙️</span> Settings
-                </a>
-                <a href="profile.php" class="nav-item">
-                    <span class="nav-icon">👤</span> Profile
-                </a>
+                <a href="dashboard.php" class="nav-item"><span class="nav-icon">▦</span> Dashboard</a>
+                <a href="users.php" class="nav-item active"><span class="nav-icon">👤</span> Users</a>
+                <a href="appointments.php" class="nav-item"><span class="nav-icon">📅</span> Appointments</a>
+                <a href="schedules.php" class="nav-item"><span class="nav-icon">🕒</span> Schedules</a>
+                <a href="reports.php" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
+                <a href="activity.php" class="nav-item"><span class="nav-icon">📋</span> Activity Log</a>
+                <a href="settings.php" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+                <a href="profile.php" class="nav-item"><span class="nav-icon">👤</span> Profile</a>
             </nav>
 
             <div class="sidebar-footer">
@@ -236,7 +425,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="main">
             <header class="topbar users-topbar">
                 <div>
@@ -247,11 +435,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             </header>
 
             <?php if ($success): ?>
-                <div class="alert alert-success" style="margin-bottom:20px;">
-                    <?php echo htmlspecialchars($success); ?>
-                </div>
+                <div class="alert alert-success" style="margin-bottom:20px;"><?php echo htmlspecialchars($success); ?></div>
             <?php endif; ?>
-
             <?php if (!empty($errors)): ?>
                 <div class="alert alert-error" style="margin-bottom:20px;">
                     <?php foreach ($errors as $error): ?>
@@ -268,15 +453,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <th>EMAIL</th>
                             <th>ROLE</th>
                             <th>STATUS</th>
+                            <th>ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($allUsers as $u): ?>
+                            <?php
+                            $st = strtolower($u['status'] ?? 'active');
+                            $initial = strtoupper(substr($u['name'], 0, 1));
+                            ?>
                             <tr>
                                 <td>
                                     <div class="user-cell">
                                         <div class="table-avatar">
-                                            <?php echo strtoupper(substr($u['name'], 0, 1)); ?>
+                                            <?php if (!empty($u['avatar'])): ?>
+                                                <img src="<?php echo htmlspecialchars($u['avatar']); ?>" alt="">
+                                            <?php else: ?>
+                                                <?php echo htmlspecialchars($initial); ?>
+                                            <?php endif; ?>
                                         </div>
                                         <span><?php echo htmlspecialchars($u['name']); ?></span>
                                     </div>
@@ -288,9 +482,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="status-badge status-<?php echo htmlspecialchars($u['status']); ?>">
-                                        <?php echo ucfirst($u['status']); ?>
+                                    <span class="status-badge status-<?php echo htmlspecialchars($st); ?>">
+                                        <?php echo ucfirst($st); ?>
                                     </span>
+                                </td>
+                                <td>
+                                    <div class="btn-row">
+                                        <?php if ($st === 'pending'): ?>
+                                            <form method="POST" style="display:inline;">
+                                                <input type="hidden" name="action" value="approve_user">
+                                                <input type="hidden" name="email" value="<?php echo htmlspecialchars($u['email']); ?>">
+                                                <button type="submit" class="btn-sm btn-approve">Approve</button>
+                                            </form>
+                                            <form method="POST" style="display:inline;" onsubmit="return confirm('Ban this user?');">
+                                                <input type="hidden" name="action" value="ban_user">
+                                                <input type="hidden" name="email" value="<?php echo htmlspecialchars($u['email']); ?>">
+                                                <button type="submit" class="btn-sm btn-ban">Ban</button>
+                                            </form>
+                                        <?php elseif ($st === 'banned'): ?>
+                                            <form method="POST" style="display:inline;">
+                                                <input type="hidden" name="action" value="unban_user">
+                                                <input type="hidden" name="email" value="<?php echo htmlspecialchars($u['email']); ?>">
+                                                <button type="submit" class="btn-sm btn-unban">Unban</button>
+                                            </form>
+                                        <?php else: ?>
+                                            <form method="POST" style="display:inline;" onsubmit="return confirm('Ban this user? They will not be able to log in.');">
+                                                <input type="hidden" name="action" value="ban_user">
+                                                <input type="hidden" name="email" value="<?php echo htmlspecialchars($u['email']); ?>">
+                                                <button type="submit" class="btn-sm btn-ban">Ban</button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -300,7 +522,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         </main>
     </div>
 
-    <!-- ADD USER MODAL -->
+    <!-- ADD USER MODAL — name, email, password only -->
     <div class="modal-overlay" id="addUserModal">
         <div class="modal add-user-modal">
             <div class="modal-header">
@@ -322,27 +544,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
                 <div class="form-group">
                     <label>PASSWORD (exactly 7 characters)</label>
-                    <input type="password" name="password" placeholder="•••••••" required>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>ROLE</label>
-                        <select name="role" required>
-                            <option value="">Select role</option>
-                            <option value="admin">Admin</option>
-                            <option value="doctor">Doctor</option>
-                            <option value="staff">Staff</option>
-                            <option value="patient">Patient</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>STATUS</label>
-                        <select name="status" required>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </div>
+                    <input type="password" name="password" placeholder="•••••••" maxlength="7" minlength="7" required>
                 </div>
 
                 <div class="modal-actions">
@@ -353,7 +555,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         </div>
     </div>
 
-    <!-- LOGOUT MODAL -->
     <div class="modal-overlay" id="logoutModal">
         <div class="modal">
             <div class="modal-icon">
@@ -388,14 +589,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         function closeLogoutModal() {
             document.getElementById('logoutModal').classList.remove('show');
         }
-
         document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
             overlay.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('show');
-                }
+                if (e.target === this) this.classList.remove('show');
             });
         });
+        // Password max 7 in modal
+        (function() {
+            var input = document.querySelector('#addUserModal input[name="password"]');
+            if (!input) return;
+            input.addEventListener('input', function() {
+                if (input.value.length > 7) input.value = input.value.slice(0, 7);
+            });
+        })();
     </script>
 </body>
 
