@@ -28,5 +28,13 @@
         "phone": "+63 912 345 6789",
         "position": "Clinic Staff",
         "avatar": "uploads\/avatar_staff_gentlecare_com_1791944641.jpg"
+    },
+    "christianrefuela@gmail.com": {
+        "full_name": "Christian Refuela",
+        "email": "christianrefuela@gmail.com",
+        "phone": "+63 912 345 6789",
+        "dob": "June 21, 2005",
+        "blood_type": "A",
+        "avatar": ""
     }
 }
