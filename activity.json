@@ -1,5 +1,14 @@
 [
     {
+        "id": 10,
+        "actor": "CK Perino",
+        "action": "Updated staff profile",
+        "type": "primary",
+        "time": "1:39 AM",
+        "timestamp": 1792193992,
+        "date": "2026-10-17 01:39:52"
+    },
+    {
         "id": 9,
         "actor": "Jephte James Sumagang",
         "action": "Approved account: James Sumalinog",

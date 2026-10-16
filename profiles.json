@@ -44,5 +44,12 @@
         "specialty": "General Medicine",
         "license": "MD-2024-001",
         "avatar": "uploads\/avatar_shekina_email_com_1792124056.jpg"
+    },
+    "clark@email.com": {
+        "full_name": "CK Perino",
+        "email": "clark@email.com",
+        "phone": "+63 912 345 6789",
+        "position": "Clinic Staff",
+        "avatar": "uploads\/avatar_clark_email_com_1792193992.jpg"
     }
 }
