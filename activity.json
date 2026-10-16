@@ -1,5 +1,32 @@
 [
     {
+        "id": 9,
+        "actor": "Jephte James Sumagang",
+        "action": "Approved account: James Sumalinog",
+        "type": "success",
+        "time": "1:29 AM",
+        "timestamp": 1792193363,
+        "date": "2026-10-17 01:29:23"
+    },
+    {
+        "id": 8,
+        "actor": "Jephte James Sumagang",
+        "action": "Approved account: Teodor Comayas",
+        "type": "success",
+        "time": "1:29 AM",
+        "timestamp": 1792193360,
+        "date": "2026-10-17 01:29:20"
+    },
+    {
+        "id": 7,
+        "actor": "Jephte James Sumagang",
+        "action": "Approved account: Christian Refuela",
+        "type": "success",
+        "time": "1:29 AM",
+        "timestamp": 1792193357,
+        "date": "2026-10-17 01:29:17"
+    },
+    {
         "id": 6,
         "actor": "Dr. James Carl Vistal",
         "action": "Completed session for appointment #4",
