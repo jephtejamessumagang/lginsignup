@@ -36,5 +36,13 @@
         "dob": "June 21, 2005",
         "blood_type": "A",
         "avatar": ""
+    },
+    "shekina@email.com": {
+        "full_name": "Shekina Sumagang",
+        "email": "shekina@email.com",
+        "phone": "+63 912 345 6789",
+        "specialty": "General Medicine",
+        "license": "MD-2024-001",
+        "avatar": "uploads\/avatar_shekina_email_com_1792124056.jpg"
     }
 }

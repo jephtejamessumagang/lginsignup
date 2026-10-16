@@ -19,5 +19,14 @@
         "age": 19,
         "password": "$2y$10$GtRXANbxdFBts6gI86lm6.Lh6fMNt8b712haFOY2EdfGQjgzD2u1S",
         "created": "2026-10-06 07:29:14"
+    },
+    {
+        "name": "Shekina Sumagang",
+        "email": "shekina@email.com",
+        "age": 19,
+        "role": "doctor",
+        "status": "active",
+        "password": "$2y$10$Q3avtuJesQ\/5vGC0HFtvKuR5FWpdgfzvi3.AYmFYoJ\/USjmYWhUNe",
+        "created": "2026-10-16 06:13:30"
     }
 ]
