@@ -19,7 +19,6 @@ if (file_exists($profilesFileSidebar)) {
     if (isset($allProfiles[$key]['avatar']) && $allProfiles[$key]['avatar'] && file_exists(__DIR__ . '/' . $allProfiles[$key]['avatar'])) {
         $sidebarAvatar = $allProfiles[$key]['avatar'];
     }
-    // Show updated full name from Profile on every page
     if (!empty($allProfiles[$key]['full_name'])) {
         $_SESSION['user']['name'] = $allProfiles[$key]['full_name'];
         $user['name'] = $allProfiles[$key]['full_name'];
@@ -28,7 +27,6 @@ if (file_exists($profilesFileSidebar)) {
 
 $appointmentsFile = __DIR__ . '/appointments.json';
 
-// Load appointments
 $appointments = [];
 if (file_exists($appointmentsFile)) {
     $appointments = json_decode(file_get_contents($appointmentsFile), true) ?? [];
@@ -41,8 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $id     = (int)($_POST['id'] ?? 0);
     $status = strtolower(trim($_POST['status'] ?? ''));
 
-    $allowed = ['confirmed', 'checked-in', 'completed', 'no-show', 'cancelled'];
-    if (in_array($status, $allowed) && $id > 0) {
+    $allowed = ['confirmed', 'checked-in', 'completed', 'no-show', 'cancelled', 'pending'];
+    if (in_array($status, $allowed, true) && $id > 0) {
         foreach ($appointments as &$a) {
             if ((int)$a['id'] === $id) {
                 $a['status'] = $status;
@@ -56,26 +54,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $logType = in_array($status, ['cancelled', 'no-show'], true) ? 'danger' : ($status === 'completed' ? 'primary' : 'success');
         log_activity($actorName, $statusLabel . ' appointment #' . $id, $logType);
     }
-    header('Location: staff-queue.php');
+    header('Location: staff-schedule.php');
     exit;
 }
 
-// Queue = today's appointments that are still waiting (confirmed or checked-in)
-$queue = [];
+// Today's appointments
+$todayAppointments = [];
 foreach ($appointments as $appt) {
-    if (strpos($appt['datetime'], $today) !== 0) continue;
-    $status = strtolower($appt['status'] ?? '');
-    if (in_array($status, ['confirmed', 'checked-in', 'pending'])) {
-        $queue[] = $appt;
+    if (strpos($appt['datetime'] ?? '', $today) === 0) {
+        $todayAppointments[] = $appt;
     }
 }
 
-// Sort by time
-usort($queue, function ($a, $b) {
-    return strcmp($a['datetime'], $b['datetime']);
+usort($todayAppointments, function ($a, $b) {
+    return strcmp($a['datetime'] ?? '', $b['datetime'] ?? '');
 });
 
-$count = count($queue);
+$count = count($todayAppointments);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -83,113 +78,100 @@ $count = count($queue);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Queue - JJJ GentleCare</title>
+    <title>Today's Schedule - JJJ GentleCare</title>
     <link rel="stylesheet" href="dashboard.css">
     <style>
-        .queue-list {
+        .staff-list {
             display: flex;
             flex-direction: column;
             gap: 14px;
         }
 
-        .queue-card {
+        .staff-card {
             background: white;
             border-radius: 16px;
-            padding: 18px 22px;
+            padding: 20px 22px;
             border: 1px solid #e2e8f0;
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Hover highlight */
-        .queue-card:hover {
+        .staff-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 12px 28px rgba(13, 148, 136, 0.14);
             border-color: #99f6e4;
             background: #f0fdfa;
         }
 
-        .queue-top {
+        .staff-card-top {
             display: flex;
             align-items: center;
             gap: 14px;
         }
 
-        .queue-number {
-            width: 28px;
-            height: 28px;
-            background: #f1f5f9;
-            color: #64748b;
-            border-radius: 50%;
-            display: grid;
-            place-items: center;
-            font-weight: 700;
-            font-size: 0.85rem;
-            flex-shrink: 0;
-            transition: all 0.2s;
-        }
-
-        .queue-card:hover .queue-number {
-            background: #0d9488;
-            color: white;
-        }
-
-        .queue-avatar {
-            width: 44px;
-            height: 44px;
+        .staff-avatar {
+            width: 46px;
+            height: 46px;
             background: #ccfbf1;
             color: #0f766e;
             border-radius: 50%;
             display: grid;
             place-items: center;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             flex-shrink: 0;
             transition: all 0.25s ease;
         }
 
-        .queue-card:hover .queue-avatar {
+        .staff-card:hover .staff-avatar {
             background: #0d9488;
             color: white;
             transform: scale(1.06);
         }
 
-        .queue-info {
+        .staff-info {
             flex: 1;
         }
 
-        .queue-name {
+        .staff-name {
             font-weight: 600;
-            font-size: 0.98rem;
+            font-size: 1rem;
             color: #1e293b;
             transition: color 0.2s;
         }
 
-        .queue-card:hover .queue-name {
+        .staff-card:hover .staff-name {
             color: #0f766e;
         }
 
-        .queue-meta {
-            font-size: 0.84rem;
+        .staff-meta {
+            font-size: 0.85rem;
             color: #64748b;
             margin-top: 2px;
         }
 
-        .queue-status {
+        .staff-note {
+            font-size: 0.82rem;
+            color: #64748b;
+            font-style: italic;
+            margin-top: 2px;
+        }
+
+        .staff-status {
             flex-shrink: 0;
         }
 
-        .queue-actions {
+        .staff-actions {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            padding-left: 86px;
+            padding-left: 60px;
         }
 
-        .btn-q {
+        .btn-staff {
             padding: 7px 14px;
             border-radius: 8px;
             font-size: 0.8rem;
@@ -218,6 +200,15 @@ $count = count($queue);
             background: #1d4ed8;
         }
 
+        .btn-confirm {
+            background: #0d9488;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #0f766e;
+        }
+
         .btn-noshow {
             background: #f1f5f9;
             color: #64748b;
@@ -240,7 +231,7 @@ $count = count($queue);
             background: #fee2e2;
         }
 
-        .empty-queue {
+        .empty-schedule {
             text-align: center;
             padding: 48px 20px;
             color: #94a3b8;
@@ -250,11 +241,11 @@ $count = count($queue);
         }
 
         @media (max-width: 600px) {
-            .queue-actions {
+            .staff-actions {
                 padding-left: 0;
             }
 
-            .queue-top {
+            .staff-card-top {
                 flex-wrap: wrap;
             }
         }
@@ -263,7 +254,6 @@ $count = count($queue);
 
 <body>
     <div class="layout">
-        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -294,13 +284,13 @@ $count = count($queue);
             </div>
 
             <nav class="nav">
-                <a href="staff-schedule.php" class="nav-item">
+                <a href="staff-schedule.php" class="nav-item active">
                     <span class="nav-icon">🕒</span> Today's Schedule
                 </a>
                 <a href="staff-book.php" class="nav-item">
                     <span class="nav-icon">＋</span> Book Appointment
                 </a>
-                <a href="staff-queue.php" class="nav-item active">
+                <a href="staff-queue.php" class="nav-item">
                     <span class="nav-icon">👥</span> Patient Queue
                 </a>
                 <a href="staff-appointments.php" class="nav-item">
@@ -318,77 +308,94 @@ $count = count($queue);
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="main">
             <header class="topbar">
                 <div>
-                    <h1>Patient Queue</h1>
-                    <p class="date"><?php echo $count; ?> patient<?php echo $count !== 1 ? 's' : ''; ?> waiting</p>
+                    <h1>Today's Schedule</h1>
+                    <p class="date"><?php echo $count; ?> appointment<?php echo $count !== 1 ? 's' : ''; ?> today</p>
                 </div>
             </header>
 
-            <div class="queue-list">
-                <?php if (empty($queue)): ?>
-                    <div class="empty-queue">
-                        No patients currently waiting.
+            <div class="staff-list">
+                <?php if (empty($todayAppointments)): ?>
+                    <div class="empty-schedule">
+                        No appointments scheduled for today.
                     </div>
                 <?php else: ?>
-                    <?php $num = 1;
-                    foreach ($queue as $appt): ?>
+                    <?php foreach ($todayAppointments as $appt): ?>
                         <?php
-                        $status = strtolower($appt['status']);
+                        $status = strtolower($appt['status'] ?? 'pending');
                         $label  = ucwords(str_replace('-', ' ', $status));
                         $timePart = '';
-                        $parts = explode(' ', $appt['datetime'], 2);
-                        if (isset($parts[1])) $timePart = $parts[1];
+                        $parts = explode(' ', $appt['datetime'] ?? '', 2);
+                        if (isset($parts[1])) {
+                            $timePart = $parts[1];
+                        }
+                        $patient = $appt['patient'] ?? 'Unknown';
+                        $type = $appt['type'] ?? 'Consultation';
+                        $doctor = $appt['doctor'] ?? '';
+                        $notes = $appt['notes'] ?? '';
                         ?>
-                        <div class="queue-card">
-                            <div class="queue-top">
-                                <div class="queue-number"><?php echo $num++; ?></div>
-                                <div class="queue-avatar">
-                                    <?php echo strtoupper(substr($appt['patient'], 0, 1)); ?>
+                        <div class="staff-card">
+                            <div class="staff-card-top">
+                                <div class="staff-avatar">
+                                    <?php echo strtoupper(substr($patient, 0, 1)); ?>
                                 </div>
-                                <div class="queue-info">
-                                    <div class="queue-name"><?php echo htmlspecialchars($appt['patient']); ?></div>
-                                    <div class="queue-meta">
-                                        <?php echo htmlspecialchars($timePart); ?> · <?php echo htmlspecialchars($appt['type']); ?>
+                                <div class="staff-info">
+                                    <div class="staff-name"><?php echo htmlspecialchars($patient); ?></div>
+                                    <div class="staff-meta">
+                                        <?php echo htmlspecialchars($timePart); ?>
+                                        · <?php echo htmlspecialchars($type); ?>
+                                        <?php if ($doctor !== ''): ?>
+                                            · <?php echo htmlspecialchars($doctor); ?>
+                                        <?php endif; ?>
                                     </div>
+                                    <?php if ($notes !== ''): ?>
+                                        <div class="staff-note"><?php echo htmlspecialchars($notes); ?></div>
+                                    <?php endif; ?>
                                 </div>
-                                <div class="queue-status">
-                                    <span class="appt-status status-<?php echo $status; ?>">
+                                <div class="staff-status">
+                                    <span class="appt-status status-<?php echo htmlspecialchars($status); ?>">
                                         <span class="status-dot"></span>
                                         <?php echo htmlspecialchars($label); ?>
                                     </span>
                                 </div>
                             </div>
 
-                            <div class="queue-actions">
-                                <?php if ($status === 'confirmed' || $status === 'pending'): ?>
+                            <div class="staff-actions">
+                                <?php if (in_array($status, ['pending', 'confirmed'], true)): ?>
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="action" value="update_status">
                                         <input type="hidden" name="id" value="<?php echo (int)$appt['id']; ?>">
                                         <input type="hidden" name="status" value="checked-in">
-                                        <button type="submit" class="btn-q btn-checkin">Check-in</button>
+                                        <button type="submit" class="btn-staff btn-checkin">Check-in</button>
                                     </form>
+                                    <?php if ($status === 'pending'): ?>
+                                        <form method="POST" style="display:inline;">
+                                            <input type="hidden" name="action" value="update_status">
+                                            <input type="hidden" name="id" value="<?php echo (int)$appt['id']; ?>">
+                                            <input type="hidden" name="status" value="confirmed">
+                                            <button type="submit" class="btn-staff btn-confirm">Confirm</button>
+                                        </form>
+                                    <?php endif; ?>
                                     <form method="POST" style="display:inline;" onsubmit="return confirm('Mark as No-show?');">
                                         <input type="hidden" name="action" value="update_status">
                                         <input type="hidden" name="id" value="<?php echo (int)$appt['id']; ?>">
                                         <input type="hidden" name="status" value="no-show">
-                                        <button type="submit" class="btn-q btn-noshow">No-show</button>
+                                        <button type="submit" class="btn-staff btn-noshow">No-show</button>
                                     </form>
                                     <form method="POST" style="display:inline;" onsubmit="return confirm('Cancel this appointment?');">
                                         <input type="hidden" name="action" value="update_status">
                                         <input type="hidden" name="id" value="<?php echo (int)$appt['id']; ?>">
                                         <input type="hidden" name="status" value="cancelled">
-                                        <button type="submit" class="btn-q btn-cancel">Cancel</button>
+                                        <button type="submit" class="btn-staff btn-cancel">Cancel</button>
                                     </form>
-
                                 <?php elseif ($status === 'checked-in'): ?>
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="action" value="update_status">
                                         <input type="hidden" name="id" value="<?php echo (int)$appt['id']; ?>">
                                         <input type="hidden" name="status" value="completed">
-                                        <button type="submit" class="btn-q btn-complete">Complete</button>
+                                        <button type="submit" class="btn-staff btn-complete">Complete</button>
                                     </form>
                                 <?php endif; ?>
                             </div>
@@ -399,7 +406,6 @@ $count = count($queue);
         </main>
     </div>
 
-    <!-- LOGOUT MODAL -->
     <div class="modal-overlay" id="logoutModal">
         <div class="modal">
             <div class="modal-icon">
