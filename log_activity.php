@@ -1,12 +1,6 @@
 <?php
 
-/**
- * Shared activity logger for JJJ GentleCare.
- * Usage: require_once __DIR__ . '/log_activity.php';
- *        log_activity('Jack Inihao', 'Confirmed appointment for Maria Santos', 'success');
- *
- * Types: success | danger | info | primary | warning
- */
+
 function log_activity(string $actor, string $action, string $type = 'info'): void
 {
     $file = __DIR__ . '/activity.json';
