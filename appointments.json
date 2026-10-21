@@ -70,5 +70,23 @@
         "datetime": "2026-08-10 09:00 AM",
         "type": "Consultation",
         "status": "cancelled"
+    },
+    {
+        "id": 10,
+        "patient": "Jephte James T. Sumagang",
+        "doctor": "Dr. Vistal",
+        "datetime": "2026-10-21 01:00 PM",
+        "type": "Consultation",
+        "status": "completed",
+        "notes": "High fever and rough cough"
+    },
+    {
+        "id": 11,
+        "patient": "Jephte James T. Sumagang",
+        "doctor": "Dr. Vistal",
+        "datetime": "2026-10-21 02:00 PM",
+        "type": "Consultation",
+        "status": "completed",
+        "notes": "High Fever and rough cough"
     }
 ]
