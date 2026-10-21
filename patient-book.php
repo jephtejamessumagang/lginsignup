@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/log_activity.php';
+require_once __DIR__ . '/log_notification.php';
 
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'patient') {
     header('Location: index.php');
@@ -113,8 +114,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             file_put_contents($appointmentsFile, json_encode(array_values($appointments), JSON_PRETTY_PRINT));
             $actorName = $_SESSION['user']['name'] ?? 'Patient';
             log_activity($actorName, 'Requested appointment with ' . $doctor, 'info');
+            log_notification('staff', $actorName . ' requested a ' . $type . ' appointment on ' . $date . ' at ' . $time, 'info', [
+                'appointment_id' => $newId,
+                'patient' => $actorName,
+                'doctor' => $doctor,
+            ]);
             unset($_SESSION['book_type']);
-            $success = "Appointment request submitted successfully!";
+            $success = "Appointment request submitted! Staff will review your request.";
             $step = 2;
         } else {
             $step = 2;
@@ -424,6 +430,10 @@ $selectedTime = $_POST['time'] ?? '';
         </aside>
 
         <main class="main">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                <?php require __DIR__ . '/notif_ui.php'; ?>
+            </div>
+
             <div class="book-wrap">
                 <div class="page-title">
                     <h1>Book Appointment</h1>

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/log_activity.php';
+require_once __DIR__ . '/log_notification.php';
 
 // Protect page - only doctor can access
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'doctor') {
@@ -368,6 +369,10 @@ $upcomingCount = count($upcomingPatients);
 
         <!-- MAIN CONTENT -->
         <main class="main">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                <?php require __DIR__ . '/notif_ui.php'; ?>
+            </div>
+
             <?php if ($success): ?>
                 <div class="alert alert-success" style="margin-bottom:20px;"><?php echo htmlspecialchars($success); ?></div>
             <?php endif; ?>

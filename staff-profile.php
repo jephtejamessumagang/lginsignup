@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/log_activity.php';
+require_once __DIR__ . '/log_notification.php';
 
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'staff') {
     header('Location: index.php');
@@ -321,7 +322,6 @@ $initial = strtoupper(substr($profile['full_name'] ?: 'S', 0, 1));
             </div>
             <nav class="nav">
                 <a href="staff-schedule.php" class="nav-item"><span class="nav-icon">🕒</span> Today's Schedule</a>
-                <a href="staff-book.php" class="nav-item"><span class="nav-icon">＋</span> Book Appointment</a>
                 <a href="staff-queue.php" class="nav-item"><span class="nav-icon">👥</span> Patient Queue</a>
                 <a href="staff-appointments.php" class="nav-item"><span class="nav-icon">📋</span> All Appointments</a>
                 <a href="staff-profile.php" class="nav-item active"><span class="nav-icon">👤</span> Profile</a>
@@ -334,7 +334,7 @@ $initial = strtoupper(substr($profile['full_name'] ?: 'S', 0, 1));
             <header class="topbar" style="text-align:center;">
                 <div>
                     <h1>My Profile</h1>
-                </div>
+                </div> <?php require __DIR__ . '/notif_ui.php'; ?>
             </header>
             <div class="profile-wrap">
                 <?php if ($success): ?>

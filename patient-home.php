@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/log_notification.php';
 
 // Protect page - only patient can access
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'patient') {
@@ -448,6 +449,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         <!-- MAIN -->
         <main class="main">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                <?php require __DIR__ . '/notif_ui.php'; ?>
+            </div>
+
             <!-- Greeting Banner -->
             <div class="patient-banner">
                 <div class="patient-banner-avatar"><?php echo strtoupper(substr($user['name'], 0, 1)); ?></div>

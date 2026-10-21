@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/log_activity.php';
+require_once __DIR__ . '/log_notification.php';
 
 // Protect page - only staff can access
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'staff') {
@@ -53,6 +54,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $statusLabel = ucfirst(str_replace('-', ' ', $status));
         $logType = in_array($status, ['cancelled', 'no-show'], true) ? 'danger' : ($status === 'completed' ? 'primary' : 'success');
         log_activity($actorName, $statusLabel . ' appointment #' . $id, $logType);
+
+        $patientName = '';
+        $doctorName = 'Dr. Vistal';
+        foreach ($appointments as $a) {
+            if ((int)$a['id'] === $id) {
+                $patientName = $a['patient'] ?? '';
+                $doctorName = $a['doctor'] ?? 'Dr. Vistal';
+                break;
+            }
+        }
+        if ($status === 'confirmed') {
+            if ($patientName !== '') {
+                log_notification(strtolower($patientName), 'Your appointment #' . $id . ' was approved by clinic staff.', 'success', ['appointment_id' => $id]);
+            }
+            log_notification('doctor', 'Appointment #' . $id . ' for ' . $patientName . ' was approved.', 'primary', ['appointment_id' => $id]);
+        } elseif ($status === 'cancelled') {
+            if ($patientName !== '') {
+                log_notification(strtolower($patientName), 'Your appointment #' . $id . ' was denied/cancelled by clinic staff.', 'danger', ['appointment_id' => $id]);
+            }
+            log_notification('doctor', 'Appointment #' . $id . ' for ' . $patientName . ' was cancelled.', 'danger', ['appointment_id' => $id]);
+        } elseif ($status === 'checked-in') {
+            log_notification('doctor', $patientName . ' has checked in for appointment #' . $id . '.', 'info', ['appointment_id' => $id]);
+        } elseif ($status === 'completed') {
+            if ($patientName !== '') {
+                log_notification(strtolower($patientName), 'Your appointment #' . $id . ' was marked completed.', 'success', ['appointment_id' => $id]);
+            }
+        }
     }
     header('Location: staff-schedule.php');
     exit;
@@ -287,9 +315,6 @@ $count = count($todayAppointments);
                 <a href="staff-schedule.php" class="nav-item active">
                     <span class="nav-icon">🕒</span> Today's Schedule
                 </a>
-                <a href="staff-book.php" class="nav-item">
-                    <span class="nav-icon">＋</span> Book Appointment
-                </a>
                 <a href="staff-queue.php" class="nav-item">
                     <span class="nav-icon">👥</span> Patient Queue
                 </a>
@@ -314,6 +339,7 @@ $count = count($todayAppointments);
                     <h1>Today's Schedule</h1>
                     <p class="date"><?php echo $count; ?> appointment<?php echo $count !== 1 ? 's' : ''; ?> today</p>
                 </div>
+                <?php require __DIR__ . '/notif_ui.php'; ?>
             </header>
 
             <div class="staff-list">

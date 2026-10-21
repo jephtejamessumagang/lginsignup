@@ -1,5 +1,7 @@
 <?php
 session_start();
+require_once __DIR__ . '/log_activity.php';
+require_once __DIR__ . '/log_notification.php';
 
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'patient') {
     header('Location: index.php');
@@ -313,6 +315,7 @@ $total = count($myAppointments);
                     <h1>My Appointments</h1>
                     <p class="date"><?php echo $total; ?> total</p>
                 </div>
+                <?php require __DIR__ . '/notif_ui.php'; ?>
             </header>
 
             <div class="appt-list">
