@@ -1,9 +1,8 @@
 <?php
 session_start();
 require_once __DIR__ . '/log_activity.php';
-require_once __DIR__ . '/log_notification.php';
 
-if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'patient') {
+if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     header('Location: index.php');
     exit;
 }
@@ -18,29 +17,26 @@ if (!is_dir($uploadDir)) {
 
 $profiles = [];
 if (file_exists($profilesFile)) {
-    $raw = file_get_contents($profilesFile);
-    $decoded = json_decode($raw, true);
+    $decoded = json_decode(file_get_contents($profilesFile), true);
     if (is_array($decoded)) {
         $profiles = $decoded;
     }
 }
 
-$emailKey = strtolower(trim($user['email'] ?? $user['name'] ?? 'patient'));
+$emailKey = strtolower(trim($user['email'] ?? 'admin@gentlecare.com'));
 
 $profile = [
-    'full_name'  => $user['name'] ?? 'Jephte James T. Sumagang',
-    'email'      => $user['email'] ?? 'patient@gentlecare.com',
-    'phone'      => '+63 912 345 6789',
-    'dob'        => 'May 25, 2002',
-    'blood_type' => 'O+',
-    'avatar'     => ''
+    'full_name' => $user['name'] ?? 'Jephte James Sumagang',
+    'email'     => $user['email'] ?? 'admin@gentlecare.com',
+    'phone'     => '+63 912 345 6789',
+    'position'  => 'System Administrator',
+    'avatar'    => ''
 ];
 
 if (isset($profiles[$emailKey]) && is_array($profiles[$emailKey])) {
     $profile = array_merge($profile, $profiles[$emailKey]);
 }
 
-// Keep session name in sync with saved profile
 if (!empty($profile['full_name'])) {
     $_SESSION['user']['name'] = $profile['full_name'];
     $user['name'] = $profile['full_name'];
@@ -55,33 +51,40 @@ $errors = [];
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_profile') {
-    $fullName  = trim($_POST['full_name'] ?? '');
-    $email     = trim($_POST['email'] ?? '');
-    $phone     = trim($_POST['phone'] ?? '');
-    $dob       = trim($_POST['dob'] ?? '');
-    $bloodType = trim($_POST['blood_type'] ?? '');
+    $fullName = trim($_POST['full_name'] ?? '');
+    $email    = trim($_POST['email'] ?? '');
+    $phone    = trim($_POST['phone'] ?? '');
+    $position = trim($_POST['position'] ?? '');
 
     if ($fullName === '') {
         $errors[] = 'Full name is required.';
     } elseif (strlen($fullName) < 2 || strlen($fullName) > 60) {
         $errors[] = 'Full name must be between 2 and 60 characters.';
     }
+
     if ($email === '') {
         $errors[] = 'Email is required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Please enter a valid email address.';
     }
+
     if ($phone === '') {
         $errors[] = 'Phone is required.';
     } elseif (!preg_match('/^[\d\s\+\-\(\)]{7,20}$/', $phone)) {
         $errors[] = 'Please enter a valid phone number.';
     }
 
+    if ($position === '') {
+        $errors[] = 'Position is required.';
+    }
+
     $avatarPath = $profile['avatar'] ?? '';
+
     if (isset($_FILES['avatar']) && is_array($_FILES['avatar']) && (int)$_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['avatar'];
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
         if (!in_array($ext, $allowedExt, true)) {
             $errors[] = 'Profile picture must be JPG, PNG, GIF, or WebP.';
         } elseif ((int)$file['size'] > 2 * 1024 * 1024) {
@@ -93,7 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if (move_uploaded_file($file['tmp_name'], $dest)) {
                 if (!empty($avatarPath) && strpos($avatarPath, 'uploads/') === 0) {
                     $old = __DIR__ . '/' . $avatarPath;
-                    if (file_exists($old)) @unlink($old);
+                    if (file_exists($old)) {
+                        @unlink($old);
+                    }
                 }
                 $avatarPath = 'uploads/' . $newName;
             } else {
@@ -110,12 +115,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $emailKey = $newKey;
 
         $profile = [
-            'full_name'  => $fullName,
-            'email'      => $email,
-            'phone'      => $phone,
-            'dob'        => $dob,
-            'blood_type' => $bloodType,
-            'avatar'     => $avatarPath
+            'full_name' => $fullName,
+            'email'     => $email,
+            'phone'     => $phone,
+            'position'  => $position,
+            'avatar'    => $avatarPath
         ];
         $profiles[$emailKey] = $profile;
         file_put_contents($profilesFile, json_encode($profiles, JSON_PRETTY_PRINT));
@@ -127,7 +131,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         if (!empty($avatarPath) && file_exists(__DIR__ . '/' . $avatarPath)) {
             $sidebarAvatar = $avatarPath;
         }
-        log_activity($fullName, 'Updated patient profile', 'primary');
+
+        log_activity($fullName, 'Updated admin profile', 'primary');
         $success = 'Profile saved successfully!';
     }
 }
@@ -136,7 +141,7 @@ $avatarUrl = '';
 if (!empty($profile['avatar']) && file_exists(__DIR__ . '/' . $profile['avatar'])) {
     $avatarUrl = $profile['avatar'];
 }
-$initial = strtoupper(substr($profile['full_name'] ?: 'P', 0, 1));
+$initial = strtoupper(substr($profile['full_name'] ?: 'A', 0, 1));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -307,6 +312,7 @@ $initial = strtoupper(substr($profile['full_name'] ?: 'P', 0, 1));
                     </div>
                 </div>
             </div>
+
             <div class="user-card">
                 <div class="avatar">
                     <?php if (!empty($sidebarAvatar)): ?>
@@ -317,37 +323,70 @@ $initial = strtoupper(substr($profile['full_name'] ?: 'P', 0, 1));
                 </div>
                 <div>
                     <div class="user-name"><?php echo htmlspecialchars($user['name']); ?></div>
-                    <div class="user-role">Patient</div>
+                    <div class="user-role">Admin</div>
                 </div>
             </div>
+
             <nav class="nav">
-                <a href="patient-home.php" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
-                <a href="patient-book.php" class="nav-item"><span class="nav-icon">＋</span> Book Appointment</a>
-                <a href="patient-appointments.php" class="nav-item"><span class="nav-icon">📅</span> My Appointments</a>
-                <a href="patient-profile.php" class="nav-item active"><span class="nav-icon">👤</span> Profile</a>
+                <a href="dashboard.php" class="nav-item">
+                    <span class="nav-icon">▦</span> Dashboard
+                </a>
+                <a href="users.php" class="nav-item">
+                    <span class="nav-icon">👤</span> Users
+                </a>
+                <a href="appointments.php" class="nav-item">
+                    <span class="nav-icon">📅</span> Appointments
+                </a>
+                <a href="schedules.php" class="nav-item">
+                    <span class="nav-icon">🕒</span> Schedules
+                </a>
+                <a href="reports.php" class="nav-item">
+                    <span class="nav-icon">📊</span> Reports
+                </a>
+                <a href="activity.php" class="nav-item">
+                    <span class="nav-icon">📋</span> Activity Log
+                </a>
+                <a href="settings.php" class="nav-item">
+                    <span class="nav-icon">⚙️</span> Settings
+                </a>
+                <a href="profile.php" class="nav-item active">
+                    <span class="nav-icon">👤</span> Profile
+                </a>
             </nav>
+
             <div class="sidebar-footer">
-                <button type="button" class="logout-btn" onclick="openLogoutModal()"><span>↪</span> Log Out</button>
+                <button type="button" class="logout-btn" onclick="openLogoutModal()">
+                    <span>↪</span> Log Out
+                </button>
             </div>
         </aside>
+
         <main class="main">
             <header class="topbar" style="text-align:center;">
                 <div>
                     <h1>My Profile</h1>
-                </div> <?php require __DIR__ . '/notif_ui.php'; ?>
+                </div>
             </header>
+
             <div class="profile-wrap">
                 <?php if ($success): ?>
-                    <div class="alert alert-success" style="margin-bottom:16px;text-align:center;"><?php echo htmlspecialchars($success); ?></div>
-                <?php endif; ?>
-                <?php if (!empty($errors)): ?>
-                    <div class="alert alert-error" style="margin-bottom:16px;">
-                        <?php foreach ($errors as $e): ?><div><?php echo htmlspecialchars($e); ?></div><?php endforeach; ?>
+                    <div class="alert alert-success" style="margin-bottom:16px; text-align:center;">
+                        <?php echo htmlspecialchars($success); ?>
                     </div>
                 <?php endif; ?>
+
+                <?php if (!empty($errors)): ?>
+                    <div class="alert alert-error" style="margin-bottom:16px;">
+                        <?php foreach ($errors as $e): ?>
+                            <div><?php echo htmlspecialchars($e); ?></div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
                 <div class="profile-card">
                     <form method="POST" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="save_profile">
+
                         <div class="avatar-wrap">
                             <div class="avatar-circle" id="avatarPreview">
                                 <?php if ($avatarUrl): ?>
@@ -359,34 +398,41 @@ $initial = strtoupper(substr($profile['full_name'] ?: 'P', 0, 1));
                             <label class="avatar-edit" for="avatarInput" title="Change photo">📷</label>
                             <input type="file" name="avatar" id="avatarInput" accept="image/jpeg,image/png,image/gif,image/webp">
                         </div>
+
                         <div class="profile-name"><?php echo htmlspecialchars($profile['full_name']); ?></div>
-                        <div class="profile-role">Patient</div>
+                        <div class="profile-role">Admin</div>
+
                         <div class="form-group">
                             <label>FULL NAME</label>
-                            <input type="text" name="full_name" value="<?php echo htmlspecialchars($profile['full_name']); ?>" required>
+                            <input type="text" name="full_name"
+                                value="<?php echo htmlspecialchars($profile['full_name']); ?>" required>
                         </div>
+
                         <div class="form-group">
                             <label>EMAIL</label>
-                            <input type="email" name="email" value="<?php echo htmlspecialchars($profile['email']); ?>" required>
+                            <input type="email" name="email"
+                                value="<?php echo htmlspecialchars($profile['email']); ?>" required>
                         </div>
+
                         <div class="form-group">
                             <label>PHONE</label>
-                            <input type="text" name="phone" value="<?php echo htmlspecialchars($profile['phone']); ?>" required>
+                            <input type="text" name="phone"
+                                value="<?php echo htmlspecialchars($profile['phone']); ?>" required>
                         </div>
+
                         <div class="form-group">
-                            <label>DATE OF BIRTH</label>
-                            <input type="text" name="dob" value="<?php echo htmlspecialchars($profile['dob'] ?? ''); ?>" placeholder="May 25, 2002">
+                            <label>POSITION</label>
+                            <input type="text" name="position"
+                                value="<?php echo htmlspecialchars($profile['position'] ?? 'System Administrator'); ?>" required>
                         </div>
-                        <div class="form-group">
-                            <label>BLOOD TYPE</label>
-                            <input type="text" name="blood_type" value="<?php echo htmlspecialchars($profile['blood_type'] ?? ''); ?>" placeholder="O+">
-                        </div>
+
                         <button type="submit" class="btn-save">Save Changes</button>
                     </form>
                 </div>
             </div>
         </main>
     </div>
+
     <div class="modal-overlay" id="logoutModal">
         <div class="modal">
             <div class="modal-icon">
@@ -404,6 +450,7 @@ $initial = strtoupper(substr($profile['full_name'] ?: 'P', 0, 1));
             </div>
         </div>
     </div>
+
     <script>
         function openLogoutModal() {
             document.getElementById('logoutModal').classList.add('show');
@@ -420,7 +467,8 @@ $initial = strtoupper(substr($profile['full_name'] ?: 'P', 0, 1));
             if (!file) return;
             var reader = new FileReader();
             reader.onload = function(ev) {
-                document.getElementById('avatarPreview').innerHTML = '<img src="' + ev.target.result + '" alt="Profile">';
+                document.getElementById('avatarPreview').innerHTML =
+                    '<img src="' + ev.target.result + '" alt="Profile">';
             };
             reader.readAsDataURL(file);
         });
