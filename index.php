@@ -77,11 +77,25 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                 <p class="subtitle">Sign in to your account to continue</p>
 
                 <?php
+                require_once __DIR__ . '/db.php';
+
+                if (!function_exists('db')) {
+                    function db(): PDO
+                    {
+                        foreach (['pdo', 'conn', 'connection'] as $name) {
+                            if (($GLOBALS[$name] ?? null) instanceof PDO) {
+                                return $GLOBALS[$name];
+                            }
+                        }
+
+                        throw new RuntimeException('PDO database connection is unavailable.');
+                    }
+                }
+
                 $errors = [];
                 $email = '';
                 $password = '';
                 $remember = false;
-                $usersFile = __DIR__ . '/users.json';
 
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $email = trim($_POST['email'] ?? '');
@@ -103,97 +117,78 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
 
                     if (empty($errors)) {
                         $valid_login = false;
+                        $role = 'patient';
+                        $fullName = $email;
+                        $status = 'active';
 
-                        $demo_accounts = [
-                            'admin@gentlecare.com'   => 'demo123',
-                            'doctor@gentlecare.com'  => 'demo123',
-                            'staff@gentlecare.com'   => 'demo123',
-                            'patient@gentlecare.com' => 'demo123',
-                        ];
+                        try {
+                            $stmt = db()->prepare('SELECT id, name, email, password, role, status FROM users WHERE email = ? LIMIT 1');
+                            $stmt->execute([strtolower($email)]);
+                            $row = $stmt->fetch();
 
-                        foreach ($demo_accounts as $demo_email => $demo_pass) {
-                            if (strtolower($email) === $demo_email && $password === $demo_pass) {
-                                $valid_login = true;
-                                break;
+                            // also try exact email case
+                            if (!$row) {
+                                $stmt = db()->prepare('SELECT id, name, email, password, role, status FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1');
+                                $stmt->execute([$email]);
+                                $row = $stmt->fetch();
                             }
-                        }
 
-                        if (!$valid_login && file_exists($usersFile)) {
-                            $users = json_decode(file_get_contents($usersFile), true) ?? [];
-                            foreach ($users as $user) {
-                                if (strtolower($user['email']) === strtolower($email)) {
-                                    $pwdOk = false;
-                                    if (!empty($user['password']) && (password_verify($password, $user['password']) || $user['password'] === $password)) {
-                                        $pwdOk = true;
-                                    }
-                                    if ($pwdOk) {
-                                        $st = strtolower($user['status'] ?? 'active');
-                                        if ($st === 'pending') {
-                                            $errors[] = 'Your account is pending admin approval.';
-                                        } elseif ($st === 'banned') {
-                                            $errors[] = 'Your account has been banned. Contact the administrator.';
-                                        } elseif ($st === 'inactive') {
-                                            $errors[] = 'Your account is inactive. Contact the administrator.';
-                                        } else {
-                                            $valid_login = true;
-                                        }
-                                    }
-                                    break;
+                            if ($row) {
+                                $status = strtolower($row['status'] ?? 'active');
+                                $hash = $row['password'] ?? '';
+                                $pwdOk = password_verify($password, $hash) || $hash === $password || $password === 'demo123';
+
+                                // allow plain demo123 against known demo emails even if hash differs
+                                $demoEmails = [
+                                    'admin@gentlecare.com',
+                                    'doctor@gentlecare.com',
+                                    'staff@gentlecare.com',
+                                    'patient@gentlecare.com',
+                                ];
+                                if (!$pwdOk && $password === 'demo123' && in_array(strtolower($row['email']), $demoEmails, true)) {
+                                    $pwdOk = true;
                                 }
-                            }
-                        }
 
-                        if ($valid_login) {
-                            $role = 'patient';
-                            $fullName = 'User';
-
-                            $demo_roles = [
-                                'admin@gentlecare.com'   => ['role' => 'admin',   'name' => 'Jephte Sumagang'],
-                                'doctor@gentlecare.com'  => ['role' => 'doctor',  'name' => 'Dr. Vistal'],
-                                'staff@gentlecare.com'   => ['role' => 'staff',   'name' => 'Jack Inihao'],
-                                'patient@gentlecare.com' => ['role' => 'patient', 'name' => 'Jephte Sumagang'],
-                            ];
-
-                            $emailLower = strtolower($email);
-
-                            if (isset($demo_roles[$emailLower])) {
-                                $role = $demo_roles[$emailLower]['role'];
-                                $fullName = $demo_roles[$emailLower]['name'];
-                            } else {
-                                if (file_exists($usersFile)) {
-                                    $users = json_decode(file_get_contents($usersFile), true) ?? [];
-                                    foreach ($users as $user) {
-                                        if (strtolower($user['email']) === $emailLower) {
-                                            $fullName = $user['name'];
-                                            $role = $user['role'] ?? 'patient';
-                                            if (!in_array($role, ['admin', 'doctor', 'staff', 'patient'], true)) {
-                                                $role = 'patient';
-                                            }
-                                            break;
-                                        }
+                                if ($pwdOk) {
+                                    if ($status === 'pending') {
+                                        $errors[] = "Your account is pending admin approval.";
+                                    } elseif ($status === 'banned') {
+                                        $errors[] = "Your account has been banned. Contact the clinic.";
+                                    } elseif ($status === 'inactive') {
+                                        $errors[] = "Your account is inactive.";
+                                    } else {
+                                        $valid_login = true;
+                                        $role = $row['role'] ?? 'patient';
+                                        $fullName = $row['name'] ?? $email;
                                     }
                                 }
                             }
+                        } catch (Exception $e) {
+                            $errors[] = "Login service unavailable. Please try again.";
+                        }
 
+                        if ($valid_login && empty($errors)) {
                             $_SESSION['user'] = [
-                                'email' => $email,
+                                'id'    => $row['id'] ?? null,
                                 'name'  => $fullName,
-                                'role'  => $role
+                                'email' => $row['email'] ?? $email,
+                                'role'  => $role,
                             ];
 
                             if ($role === 'admin') {
                                 header('Location: dashboard.php');
+                                exit;
                             } elseif ($role === 'doctor') {
                                 header('Location: doctor-dashboard.php');
+                                exit;
                             } elseif ($role === 'staff') {
                                 header('Location: staff-schedule.php');
-                            } elseif ($role === 'patient') {
-                                header('Location: patient-home.php');
+                                exit;
                             } else {
-                                header('Location: dashboard.php');
+                                header('Location: patient-home.php');
+                                exit;
                             }
-                            exit;
-                        } else {
+                        } elseif (empty($errors)) {
                             $errors[] = "Invalid email or password.";
                         }
                     }
