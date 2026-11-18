@@ -149,7 +149,7 @@
                 $confirm = '';
                 $success = false;
                 require_once __DIR__ . '/log_activity.php';
-                $usersFile = __DIR__ . '/users.json';
+                require_once __DIR__ . '/db.php';
 
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $name     = trim($_POST['name'] ?? '');
@@ -206,48 +206,49 @@
                     }
 
                     if (empty($errors)) {
-                        $demo_emails = [
-                            'admin@gentlecare.com',
-                            'doctor@gentlecare.com',
-                            'staff@gentlecare.com',
-                            'patient@gentlecare.com',
-                        ];
-
-                        if (in_array(strtolower($email), $demo_emails)) {
-                            $errors[] = "This email is already registered.";
-                        } else {
-                            $users = [];
-                            if (file_exists($usersFile)) {
-                                $users = json_decode(file_get_contents($usersFile), true) ?? [];
+                        try {
+                            $stmt = db()->prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1');
+                            $stmt->execute([$email]);
+                            if ($stmt->fetch()) {
+                                $errors[] = "This email is already registered.";
                             }
-                            foreach ($users as $user) {
-                                if (strtolower($user['email']) === strtolower($email)) {
-                                    $errors[] = "This email is already registered.";
-                                    break;
-                                }
-                            }
+                        } catch (Exception $e) {
+                            $errors[] = "Could not verify email. Please try again.";
                         }
                     }
 
                     if (empty($errors)) {
-                        $users = [];
-                        if (file_exists($usersFile)) {
-                            $users = json_decode(file_get_contents($usersFile), true) ?? [];
+                        try {
+                            $hash = password_hash($password, PASSWORD_DEFAULT);
+                            $stmt = db()->prepare(
+                                'INSERT INTO users (name, email, password, role, status, age) VALUES (?, ?, ?, ?, ?, ?)'
+                            );
+                            $stmt->execute([
+                                $name,
+                                strtolower($email),
+                                $hash,
+                                $role,
+                                'pending',
+                                (int)$age
+                            ]);
+                            $userId = (int) db()->lastInsertId();
+
+                            $stmt2 = db()->prepare(
+                                'INSERT INTO profiles (user_id, full_name, phone) VALUES (?, ?, ?)'
+                            );
+                            $stmt2->execute([$userId, $name, '']);
+
+                            $success = true;
+                            if (function_exists('log_activity')) {
+                                log_activity($name, 'Requested a new ' . $role . ' account (pending approval)', 'info');
+                            }
+                        } catch (PDOException $e) {
+                            if ((int)$e->getCode() === 23000) {
+                                $errors[] = "This email is already registered.";
+                            } else {
+                                $errors[] = "Could not create account. Please try again.";
+                            }
                         }
-
-                        $users[] = [
-                            'name'     => $name,
-                            'email'    => $email,
-                            'age'      => (int)$age,
-                            'role'     => $role,
-                            'status'   => 'pending',
-                            'password' => password_hash($password, PASSWORD_DEFAULT),
-                            'created'  => date('Y-m-d H:i:s'),
-                        ];
-
-                        file_put_contents($usersFile, json_encode($users, JSON_PRETTY_PRINT));
-                        $success = true;
-                        log_activity($name, 'Requested a new ' . $role . ' account (pending approval)', 'info');
                     }
                 }
                 ?>
