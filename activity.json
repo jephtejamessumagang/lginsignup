@@ -1,5 +1,59 @@
 [
     {
+        "id": 24,
+        "actor": "Jephte James Sumagang",
+        "action": "Banned account: CK Perino",
+        "type": "danger",
+        "time": "1:46 PM",
+        "timestamp": 1795006001,
+        "date": "2026-11-18 13:46:41"
+    },
+    {
+        "id": 23,
+        "actor": "Jephte James Sumagang",
+        "action": "Added new user: Clark Kent Perino (patient)",
+        "type": "info",
+        "time": "1:46 PM",
+        "timestamp": 1795005995,
+        "date": "2026-11-18 13:46:35"
+    },
+    {
+        "id": 22,
+        "actor": "Clark Kent Perino",
+        "action": "Requested a new staff account (pending approval)",
+        "type": "info",
+        "time": "1:45 PM",
+        "timestamp": 1795005947,
+        "date": "2026-11-18 13:45:47"
+    },
+    {
+        "id": 21,
+        "actor": "Leah Sumagang",
+        "action": "Updated patient profile",
+        "type": "primary",
+        "time": "1:42 PM",
+        "timestamp": 1795005737,
+        "date": "2026-11-18 13:42:17"
+    },
+    {
+        "id": 20,
+        "actor": "Jephte James Sumagang",
+        "action": "Added new user: Leah Sumagang (patient)",
+        "type": "info",
+        "time": "1:36 PM",
+        "timestamp": 1795005387,
+        "date": "2026-11-18 13:36:27"
+    },
+    {
+        "id": 19,
+        "actor": "Leah Sumagang",
+        "action": "Requested a new patient account (pending approval)",
+        "type": "info",
+        "time": "1:32 PM",
+        "timestamp": 1795005146,
+        "date": "2026-11-18 13:32:26"
+    },
+    {
         "id": 18,
         "actor": "Jack Norris Inihao",
         "action": "Completed appointment #11",

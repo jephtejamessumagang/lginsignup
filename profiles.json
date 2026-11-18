@@ -51,5 +51,13 @@
         "phone": "+63 912 345 6789",
         "position": "Clinic Staff",
         "avatar": "uploads\/avatar_clark_email_com_1792193992.jpg"
+    },
+    "leah@gmail.com": {
+        "full_name": "Leah Sumagang",
+        "email": "leah@gmail.com",
+        "phone": "+63 912 345 6789",
+        "dob": "October 9, 1965",
+        "blood_type": "AB+",
+        "avatar": "uploads\/avatar_leah_gmail_com_1795005737.jpg"
     }
 }

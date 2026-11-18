@@ -37,8 +37,24 @@
         "email": "clark@email.com",
         "age": 21,
         "role": "staff",
-        "status": "active",
+        "status": "banned",
         "password": "$2y$10$zU.jN6U9DSQDIe8jw9DezOalwjY8QVKpTHnL88bDgdCoPOGEzupV.",
         "created": "2026-10-16 06:18:19"
+    },
+    {
+        "name": "Leah Sumagang",
+        "email": "leah@gmail.com",
+        "role": "patient",
+        "status": "active",
+        "password": "$2y$10$z1\/yaVvpJbUkGTebQNTv5eQ052iqdsXIFfvvjyrR0JnHH6bGmxQMO",
+        "created": "2026-11-18 13:36:27"
+    },
+    {
+        "name": "Clark Kent Perino",
+        "email": "ck21@email.com",
+        "role": "patient",
+        "status": "active",
+        "password": "$2y$10$QsgtPaI9HmWGqzCM6En\/Ju2REoZ6oIH0ds8aYojrLDurXltywYz9i",
+        "created": "2026-11-18 13:46:35"
     }
 ]
