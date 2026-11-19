@@ -1,5 +1,14 @@
 [
     {
+        "id": 26,
+        "actor": "Vince Justin Alferez",
+        "action": "Requested a new doctor account (pending approval)",
+        "type": "info",
+        "time": "7:16 AM",
+        "timestamp": 1795068964,
+        "date": "2026-11-19 07:16:04"
+    },
+    {
         "id": 25,
         "actor": "Clark Kent Perino",
         "action": "Updated patient profile",
