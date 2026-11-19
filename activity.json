@@ -1,5 +1,14 @@
 [
     {
+        "id": 25,
+        "actor": "Clark Kent Perino",
+        "action": "Updated patient profile",
+        "type": "primary",
+        "time": "5:07 AM",
+        "timestamp": 1795061232,
+        "date": "2026-11-19 05:07:12"
+    },
+    {
         "id": 24,
         "actor": "Jephte James Sumagang",
         "action": "Banned account: CK Perino",
