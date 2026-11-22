@@ -1,5 +1,23 @@
 [
     {
+        "id": 28,
+        "actor": "Jephte James Sumagang",
+        "action": "Added new user: Jhenry Rosano (patient)",
+        "type": "info",
+        "time": "7:28 AM",
+        "timestamp": 1795069697,
+        "date": "2026-11-19 07:28:17"
+    },
+    {
+        "id": 27,
+        "actor": "Jhenry Rosano",
+        "action": "Requested a new patient account (pending approval)",
+        "type": "info",
+        "time": "7:23 AM",
+        "timestamp": 1795069434,
+        "date": "2026-11-19 07:23:54"
+    },
+    {
         "id": 26,
         "actor": "Vince Justin Alferez",
         "action": "Requested a new doctor account (pending approval)",

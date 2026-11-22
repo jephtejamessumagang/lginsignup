@@ -56,5 +56,13 @@
         "status": "active",
         "password": "$2y$10$QsgtPaI9HmWGqzCM6En\/Ju2REoZ6oIH0ds8aYojrLDurXltywYz9i",
         "created": "2026-11-18 13:46:35"
+    },
+    {
+        "name": "Jhenry Rosano",
+        "email": "jhenry@email.com",
+        "role": "patient",
+        "status": "active",
+        "password": "$2y$10$4RRrR6RyZiiU1ZCc3Tyg6O8HOEqzGdy1.A.SA0Ap07jhnpdEFef.i",
+        "created": "2026-11-19 07:28:17"
     }
 ]
