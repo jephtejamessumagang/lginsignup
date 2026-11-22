@@ -29,14 +29,15 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
     <title>JJJ GentleCare - Login</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Hero video */
+        /* Hero video - full area, no blue filter */
         .hero-image {
             position: relative;
             border-radius: 18px;
             overflow: hidden;
             margin-top: 28px;
-            aspect-ratio: 16 / 9;
-            max-height: 240px;
+            width: 100%;
+            height: 320px;
+            max-height: none;
         }
 
         .hero-video {
@@ -44,15 +45,11 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
             height: 100%;
             object-fit: cover;
             display: block;
+            filter: none;
         }
 
-        /* Light blue filter */
         .hero-video-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(56, 189, 248, 0.35);
-            pointer-events: none;
-            z-index: 1;
+            display: none !important;
         }
 
         @media (max-width: 960px) {
@@ -103,7 +100,6 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                     <source src="pop.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <div class="hero-video-overlay"></div>
             </div>
         </div>
 
