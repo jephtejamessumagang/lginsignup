@@ -29,15 +29,16 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
     <title>JJJ GentleCare - Login</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Hero video - full area, no blue filter */
+        /* Hero video - rounded, no controls, no blue filter */
         .hero-image {
             position: relative;
-            border-radius: 18px;
+            border-radius: 20px;
             overflow: hidden;
             margin-top: 28px;
             width: 100%;
             height: 320px;
             max-height: none;
+            background: #0f766e;
         }
 
         .hero-video {
@@ -46,6 +47,30 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
             object-fit: cover;
             display: block;
             filter: none;
+            border-radius: 20px;
+            pointer-events: none;
+            /* blocks hover controls */
+        }
+
+        /* Hide browser media controls (Chrome/Edge/Safari) */
+        .hero-video::-webkit-media-controls {
+            display: none !important;
+        }
+
+        .hero-video::-webkit-media-controls-enclosure {
+            display: none !important;
+        }
+
+        .hero-video::-webkit-media-controls-panel {
+            display: none !important;
+        }
+
+        .hero-video::-webkit-media-controls-play-button {
+            display: none !important;
+        }
+
+        .hero-video::-webkit-media-controls-start-playback-button {
+            display: none !important;
         }
 
         .hero-video-overlay {
@@ -96,7 +121,13 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
             </div>
 
             <div class="hero-image">
-                <video class="hero-video" autoplay muted loop playsinline>
+                <video class="hero-video"
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                    disablePictureInPicture
+                    controlsList="nodownload nofullscreen noremoteplayback noplaybackrate">
                     <source src="pop.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
