@@ -29,56 +29,58 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
     <title>JJJ GentleCare - Login</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Hero video - rounded, no controls, no blue filter */
-        .hero-image {
+        /* Left panel becomes video background */
+        .left-panel {
             position: relative;
-            border-radius: 20px;
             overflow: hidden;
-            margin-top: 28px;
-            width: 100%;
-            height: 320px;
-            max-height: none;
-            background: #0f766e;
+            isolation: isolate;
         }
 
-        .hero-video {
+        .left-panel-video {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            display: block;
-            filter: none;
-            border-radius: 20px;
+            z-index: 0;
             pointer-events: none;
-            /* blocks hover controls */
         }
 
-        /* Hide browser media controls (Chrome/Edge/Safari) */
-        .hero-video::-webkit-media-controls {
+        /* Teal blend so it matches your panel color */
+        .left-panel-video-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: linear-gradient(160deg,
+                    rgba(13, 148, 136, 0.88) 0%,
+                    rgba(15, 118, 110, 0.82) 45%,
+                    rgba(13, 148, 136, 0.90) 100%);
+        }
+
+        /* Keep text/content above the video */
+        .left-panel>.logo,
+        .left-panel>.hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Hide browser video controls */
+        .left-panel-video::-webkit-media-controls,
+        .left-panel-video::-webkit-media-controls-enclosure,
+        .left-panel-video::-webkit-media-controls-panel {
             display: none !important;
         }
 
-        .hero-video::-webkit-media-controls-enclosure {
-            display: none !important;
-        }
-
-        .hero-video::-webkit-media-controls-panel {
-            display: none !important;
-        }
-
-        .hero-video::-webkit-media-controls-play-button {
-            display: none !important;
-        }
-
-        .hero-video::-webkit-media-controls-start-playback-button {
-            display: none !important;
-        }
-
-        .hero-video-overlay {
+        /* Remove the old bottom video box completely */
+        .hero-image {
             display: none !important;
         }
 
         @media (max-width: 960px) {
-            .hero-image {
+
+            .left-panel-video,
+            .left-panel-video-overlay {
                 display: none;
             }
         }
@@ -89,6 +91,18 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
     <div class="container">
         <!-- Left Panel -->
         <div class="left-panel">
+            <!-- Full-panel background video -->
+            <video class="left-panel-video"
+                autoplay
+                muted
+                loop
+                playsinline
+                disablePictureInPicture
+                controlsList="nodownload nofullscreen noremoteplayback noplaybackrate">
+                <source src="pop.mp4" type="video/mp4">
+            </video>
+            <div class="left-panel-video-overlay"></div>
+
             <div class="logo">
                 <div class="logo-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -118,19 +132,6 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                         <span>Real-time clinic analytics</span>
                     </div>
                 </div>
-            </div>
-
-            <div class="hero-image">
-                <video class="hero-video"
-                    autoplay
-                    muted
-                    loop
-                    playsinline
-                    disablePictureInPicture
-                    controlsList="nodownload nofullscreen noremoteplayback noplaybackrate">
-                    <source src="pop.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
             </div>
         </div>
 
