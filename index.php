@@ -100,7 +100,7 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
 
             <div class="hero-image">
                 <video class="hero-video" autoplay muted loop playsinline>
-                    <source src="hero.mp4" type="video/mp4">
+                    <source src="pop.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
                 <div class="hero-video-overlay"></div>
