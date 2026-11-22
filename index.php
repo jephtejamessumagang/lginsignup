@@ -28,6 +28,39 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JJJ GentleCare - Login</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Hero video */
+        .hero-image {
+            position: relative;
+            border-radius: 18px;
+            overflow: hidden;
+            margin-top: 28px;
+            aspect-ratio: 16 / 9;
+            max-height: 240px;
+        }
+
+        .hero-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Light blue filter */
+        .hero-video-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(56, 189, 248, 0.35);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @media (max-width: 960px) {
+            .hero-image {
+                display: none;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -66,7 +99,11 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
             </div>
 
             <div class="hero-image">
-                <img src="photo.jpg" alt="Medical professional working">
+                <video class="hero-video" autoplay muted loop playsinline>
+                    <source src="hero.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="hero-video-overlay"></div>
             </div>
         </div>
 
@@ -120,13 +157,13 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                         $role = 'patient';
                         $fullName = $email;
                         $status = 'active';
+                        $row = null;
 
                         try {
                             $stmt = db()->prepare('SELECT id, name, email, password, role, status FROM users WHERE email = ? LIMIT 1');
                             $stmt->execute([strtolower($email)]);
                             $row = $stmt->fetch();
 
-                            // also try exact email case
                             if (!$row) {
                                 $stmt = db()->prepare('SELECT id, name, email, password, role, status FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1');
                                 $stmt->execute([$email]);
@@ -138,7 +175,6 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                                 $hash = $row['password'] ?? '';
                                 $pwdOk = password_verify($password, $hash) || $hash === $password || $password === 'demo123';
 
-                                // allow plain demo123 against known demo emails even if hash differs
                                 $demoEmails = [
                                     'admin@gentlecare.com',
                                     'doctor@gentlecare.com',
@@ -290,7 +326,6 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
             document.getElementById('password').value = 'demo123';
         }
 
-        // Limit password to exactly 7 characters (same as signup)
         (function() {
             var passwordInput = document.getElementById('password');
             if (!passwordInput) return;
