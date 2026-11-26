@@ -65,7 +65,7 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
             z-index: 2;
         }
 
-        /* Logo photo - fits and blends */
+        /* Logo photo + original-size text */
         .left-panel .logo {
             display: flex;
             align-items: center;
@@ -94,10 +94,11 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
         }
 
         .left-panel .logo-text {
-            font-size: 1.15rem;
+            font-size: 1.45rem;
             font-weight: 700;
             color: #ffffff;
             letter-spacing: 0.01em;
+            line-height: 1.2;
         }
 
         /* Hide browser video controls */
@@ -140,7 +141,7 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
 
             <div class="logo">
                 <div class="logo-icon">
-                    <img src="nmca.jpg" alt="NMCA Logo">
+                    <img src="logo.png" alt="NMCA Logo">
                 </div>
                 <span class="logo-text">JJJ GentleCare</span>
             </div>
