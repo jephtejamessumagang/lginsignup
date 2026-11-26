@@ -11,7 +11,7 @@ if (isset($_SESSION['user'])) {
     } elseif ($role === 'staff') {
         header('Location: staff-schedule.php');
     } else {
-        header('Location: dashboard.php');
+        header('Location: patient-home.php');
     }
     exit;
 }
@@ -28,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = "Please enter a valid email address.";
     } else {
-        // Check if email exists in demo accounts or users.json
         $found = false;
         $demo_emails = [
             'admin@gentlecare.com',
@@ -40,13 +39,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (in_array(strtolower($email), $demo_emails)) {
             $found = true;
         } else {
-            $usersFile = __DIR__ . '/users.json';
-            if (file_exists($usersFile)) {
-                $users = json_decode(file_get_contents($usersFile), true) ?? [];
-                foreach ($users as $user) {
-                    if (strtolower($user['email']) === strtolower($email)) {
-                        $found = true;
-                        break;
+            // Check MySQL users table if available
+            try {
+                require_once __DIR__ . '/db.php';
+                $stmt = db()->prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1');
+                $stmt->execute([$email]);
+                if ($stmt->fetch()) {
+                    $found = true;
+                }
+            } catch (Exception $e) {
+                // Fallback to users.json
+                $usersFile = __DIR__ . '/users.json';
+                if (file_exists($usersFile)) {
+                    $users = json_decode(file_get_contents($usersFile), true) ?? [];
+                    foreach ($users as $user) {
+                        if (strtolower($user['email']) === strtolower($email)) {
+                            $found = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -70,6 +80,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Forgot Password - JJJ GentleCare</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Left panel video background (same as login) */
+        .left-panel {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+        }
+
+        .left-panel-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .left-panel-video-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: linear-gradient(160deg,
+                    rgba(13, 148, 136, 0.88) 0%,
+                    rgba(15, 118, 110, 0.82) 45%,
+                    rgba(13, 148, 136, 0.90) 100%);
+        }
+
+        .left-panel>.logo,
+        .left-panel>.hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Logo photo + large text (same as login) */
+        .left-panel .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .left-panel .logo-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.95);
+            display: grid;
+            place-items: center;
+            padding: 3px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+            flex-shrink: 0;
+        }
+
+        .left-panel .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .left-panel .logo-text {
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.01em;
+            line-height: 1.2;
+        }
+
+        .left-panel-video::-webkit-media-controls,
+        .left-panel-video::-webkit-media-controls-enclosure,
+        .left-panel-video::-webkit-media-controls-panel {
+            display: none !important;
+        }
+
+        /* Hide old bottom image */
+        .hero-image {
+            display: none !important;
+        }
+
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -145,6 +236,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .remember-link a:hover {
             text-decoration: underline;
         }
+
+        @media (max-width: 960px) {
+
+            .left-panel-video,
+            .left-panel-video-overlay {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -152,11 +251,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <!-- Left Panel -->
         <div class="left-panel">
+            <!-- Same video background as login -->
+            <video class="left-panel-video"
+                autoplay
+                muted
+                loop
+                playsinline
+                disablePictureInPicture
+                controlsList="nodownload nofullscreen noremoteplayback noplaybackrate">
+                <source src="pop.mp4" type="video/mp4">
+            </video>
+            <div class="left-panel-video-overlay"></div>
+
             <div class="logo">
                 <div class="logo-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="white" />
-                    </svg>
+                    <img src="nmca.jpg" alt="NMCA Logo">
                 </div>
                 <span class="logo-text">JJJ GentleCare</span>
             </div>
@@ -181,10 +290,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <span>Real-time clinic analytics</span>
                     </div>
                 </div>
-            </div>
-
-            <div class="hero-image">
-                <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80" alt="Medical professional working">
             </div>
         </div>
 
