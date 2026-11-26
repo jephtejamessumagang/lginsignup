@@ -19,6 +19,123 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
         exit;
     }
 }
+
+// ---------- LOGIN LOGIC (must be before any HTML) ----------
+require_once __DIR__ . '/db.php';
+
+if (!function_exists('db')) {
+    function db(): PDO
+    {
+        foreach (['pdo', 'conn', 'connection'] as $name) {
+            if (($GLOBALS[$name] ?? null) instanceof PDO) {
+                return $GLOBALS[$name];
+            }
+        }
+        throw new RuntimeException('PDO database connection is unavailable.');
+    }
+}
+
+$errors = [];
+$email = '';
+$password = '';
+$remember = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $remember = isset($_POST['remember']);
+
+    if ($email === '') {
+        $errors[] = "Email address is required.";
+    }
+    if ($password === '') {
+        $errors[] = "Password is required.";
+    }
+    if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Valid email address is required.";
+    }
+    if ($password !== '' && strlen($password) !== 7) {
+        $errors[] = "Password must be exactly 7 characters.";
+    }
+
+    if (empty($errors)) {
+        $valid_login = false;
+        $role = 'patient';
+        $fullName = $email;
+        $status = 'active';
+        $row = null;
+
+        try {
+            $stmt = db()->prepare('SELECT id, name, email, password, role, status FROM users WHERE email = ? LIMIT 1');
+            $stmt->execute([strtolower($email)]);
+            $row = $stmt->fetch();
+
+            if (!$row) {
+                $stmt = db()->prepare('SELECT id, name, email, password, role, status FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1');
+                $stmt->execute([$email]);
+                $row = $stmt->fetch();
+            }
+
+            if ($row) {
+                $status = strtolower($row['status'] ?? 'active');
+                $hash = $row['password'] ?? '';
+                $pwdOk = password_verify($password, $hash) || $hash === $password || $password === 'demo123';
+
+                $demoEmails = [
+                    'admin@gentlecare.com',
+                    'doctor@gentlecare.com',
+                    'staff@gentlecare.com',
+                    'patient@gentlecare.com',
+                ];
+                if (!$pwdOk && $password === 'demo123' && in_array(strtolower($row['email']), $demoEmails, true)) {
+                    $pwdOk = true;
+                }
+
+                if ($pwdOk) {
+                    if ($status === 'pending') {
+                        $errors[] = "Your account is pending admin approval.";
+                    } elseif ($status === 'banned') {
+                        $errors[] = "Your account has been banned. Contact the clinic.";
+                    } elseif ($status === 'inactive') {
+                        $errors[] = "Your account is inactive.";
+                    } else {
+                        $valid_login = true;
+                        $role = $row['role'] ?? 'patient';
+                        $fullName = $row['name'] ?? $email;
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            $errors[] = "Login service unavailable. Please try again.";
+        }
+
+        if ($valid_login && empty($errors)) {
+            $_SESSION['user'] = [
+                'id'    => $row['id'] ?? null,
+                'name'  => $fullName,
+                'email' => $row['email'] ?? $email,
+                'role'  => $role,
+            ];
+
+            if ($role === 'admin') {
+                header('Location: dashboard.php');
+                exit;
+            } elseif ($role === 'doctor') {
+                header('Location: doctor-dashboard.php');
+                exit;
+            } elseif ($role === 'staff') {
+                header('Location: staff-schedule.php');
+                exit;
+            } else {
+                header('Location: patient-home.php');
+                exit;
+            }
+        } elseif (empty($errors)) {
+            $errors[] = "Invalid email or password.";
+        }
+    }
+}
+// ---------- END LOGIN LOGIC ----------
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -127,7 +244,6 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
     <div class="container">
         <!-- Left Panel -->
         <div class="left-panel">
-            <!-- Full-panel background video -->
             <video class="left-panel-video"
                 autoplay
                 muted
@@ -175,124 +291,6 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                 <h2>Welcome back</h2>
                 <p class="subtitle">Sign in to your account to continue</p>
 
-                <?php
-                require_once __DIR__ . '/db.php';
-
-                if (!function_exists('db')) {
-                    function db(): PDO
-                    {
-                        foreach (['pdo', 'conn', 'connection'] as $name) {
-                            if (($GLOBALS[$name] ?? null) instanceof PDO) {
-                                return $GLOBALS[$name];
-                            }
-                        }
-
-                        throw new RuntimeException('PDO database connection is unavailable.');
-                    }
-                }
-
-                $errors = [];
-                $email = '';
-                $password = '';
-                $remember = false;
-
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    $email = trim($_POST['email'] ?? '');
-                    $password = trim($_POST['password'] ?? '');
-                    $remember = isset($_POST['remember']);
-
-                    if ($email === '') {
-                        $errors[] = "Email address is required.";
-                    }
-                    if ($password === '') {
-                        $errors[] = "Password is required.";
-                    }
-                    if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                        $errors[] = "Valid email address is required.";
-                    }
-                    if ($password !== '' && strlen($password) !== 7) {
-                        $errors[] = "Password must be exactly 7 characters.";
-                    }
-
-                    if (empty($errors)) {
-                        $valid_login = false;
-                        $role = 'patient';
-                        $fullName = $email;
-                        $status = 'active';
-                        $row = null;
-
-                        try {
-                            $stmt = db()->prepare('SELECT id, name, email, password, role, status FROM users WHERE email = ? LIMIT 1');
-                            $stmt->execute([strtolower($email)]);
-                            $row = $stmt->fetch();
-
-                            if (!$row) {
-                                $stmt = db()->prepare('SELECT id, name, email, password, role, status FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1');
-                                $stmt->execute([$email]);
-                                $row = $stmt->fetch();
-                            }
-
-                            if ($row) {
-                                $status = strtolower($row['status'] ?? 'active');
-                                $hash = $row['password'] ?? '';
-                                $pwdOk = password_verify($password, $hash) || $hash === $password || $password === 'demo123';
-
-                                $demoEmails = [
-                                    'admin@gentlecare.com',
-                                    'doctor@gentlecare.com',
-                                    'staff@gentlecare.com',
-                                    'patient@gentlecare.com',
-                                ];
-                                if (!$pwdOk && $password === 'demo123' && in_array(strtolower($row['email']), $demoEmails, true)) {
-                                    $pwdOk = true;
-                                }
-
-                                if ($pwdOk) {
-                                    if ($status === 'pending') {
-                                        $errors[] = "Your account is pending admin approval.";
-                                    } elseif ($status === 'banned') {
-                                        $errors[] = "Your account has been banned. Contact the clinic.";
-                                    } elseif ($status === 'inactive') {
-                                        $errors[] = "Your account is inactive.";
-                                    } else {
-                                        $valid_login = true;
-                                        $role = $row['role'] ?? 'patient';
-                                        $fullName = $row['name'] ?? $email;
-                                    }
-                                }
-                            }
-                        } catch (Exception $e) {
-                            $errors[] = "Login service unavailable. Please try again.";
-                        }
-
-                        if ($valid_login && empty($errors)) {
-                            $_SESSION['user'] = [
-                                'id'    => $row['id'] ?? null,
-                                'name'  => $fullName,
-                                'email' => $row['email'] ?? $email,
-                                'role'  => $role,
-                            ];
-
-                            if ($role === 'admin') {
-                                header('Location: dashboard.php');
-                                exit;
-                            } elseif ($role === 'doctor') {
-                                header('Location: doctor-dashboard.php');
-                                exit;
-                            } elseif ($role === 'staff') {
-                                header('Location: staff-schedule.php');
-                                exit;
-                            } else {
-                                header('Location: patient-home.php');
-                                exit;
-                            }
-                        } elseif (empty($errors)) {
-                            $errors[] = "Invalid email or password.";
-                        }
-                    }
-                }
-                ?>
-
                 <?php if (!empty($errors)): ?>
                     <div class="alert alert-error">
                         <?php foreach ($errors as $error): ?>
@@ -326,7 +324,7 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
                         </div>
                     </div>
 
-                    <div class="form-group checkbox-group">
+                    <div class="form- freegroup checkbox-group">
                         <label class="checkbox-label">
                             <input type="checkbox" name="remember" <?php echo $remember ? 'checked' : ''; ?>>
                             <span>Remember me for 30 days</span>
