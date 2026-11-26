@@ -141,7 +141,7 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user']['role'])) {
 
             <div class="logo">
                 <div class="logo-icon">
-                    <img src="logo.png" alt="NMCA Logo">
+                    <img src="nmca.jpg" alt="NMCA Logo">
                 </div>
                 <span class="logo-text">JJJ GentleCare</span>
             </div>
