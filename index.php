@@ -324,7 +324,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-                    <div class="form- freegroup checkbox-group">
+                    <div class="form-group checkbox-group">
                         <label class="checkbox-label">
                             <input type="checkbox" name="remember" <?php echo $remember ? 'checked' : ''; ?>>
                             <span>Remember me for 30 days</span>
@@ -349,7 +349,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div class="demo-card doctor" onclick="fillDemo('doctor@gentlecare.com')">
                         <span class="demo-role doctor-role">DOCTOR</span>
-                        <span class="demo-name">Dr. Vistal</span>
+                        <span class="demo-name">Dr. Tajones</span>
                         <span class="demo-desc">Physician portal</span>
                     </div>
                     <div class="demo-card staff" onclick="fillDemo('staff@gentlecare.com')">
